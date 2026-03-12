@@ -1,0 +1,148 @@
+{% extends "archives/base.html" %}
+{% block title %}Gestion des dépôts — Archives ENSMG{% endblock %}
+{% block topbar_title %}Gestion des dépôts{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="?"
+       class="btn btn-sm {% if not statut_filtre %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi bi-list-ul me-1"></i>Tous
+    </a>
+    <a href="?statut=EN_ATTENTE"
+       class="btn btn-sm {% if statut_filtre == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+      <i class="bi bi-hourglass-split me-1"></i>En attente
+      {% if nb_en_attente %}<span class="badge bg-dark ms-1">{{ nb_en_attente }}</span>{% endif %}
+    </a>
+    <a href="?statut=ARCHIVE"
+       class="btn btn-sm {% if statut_filtre == 'ARCHIVE' %}btn-success{% else %}btn-outline-success{% endif %}">
+      <i class="bi bi-check-circle me-1"></i>Archivés
+    </a>
+    <a href="?statut=REJETE"
+       class="btn btn-sm {% if statut_filtre == 'REJETE' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+      <i class="bi bi-x-circle me-1"></i>Rejetés
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-inbox-fill me-2 text-warning"></i>
+      Dépôts —
+      {% if statut_filtre == 'EN_ATTENTE' %}En attente
+      {% elif statut_filtre == 'ARCHIVE' %}Archivés
+      {% elif statut_filtre == 'REJETE' %}Rejetés
+      {% else %}Tous{% endif %}
+      <span class="text-muted fw-normal">({{ page_obj.paginator.count }})</span>
+    </h6>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Récépissé</th>
+            <th>Titre du dépôt</th>
+            <th>Agent déposant</th>
+            <th>Catégorie</th>
+            <th>Date dépôt</th>
+            <th>Date document</th>
+            <th>Fichier</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for depot in depots %}
+        <tr class="clickable-row" data-href="{% url 'archives:archiviste_depot_detail' depot.pk %}"
+            style="cursor:pointer">
+          <td><code class="small text-muted">{{ depot.numero_recepisse }}</code></td>
+          <td>
+            <strong>{{ depot.titre|truncatechars:40 }}</strong>
+            {% if depot.description %}
+            <br><small class="text-muted">{{ depot.description|truncatechars:55 }}</small>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center"
+                   style="width:30px;height:30px;font-size:.75rem;font-weight:600">
+                {{ depot.agent.first_name|first|default:depot.agent.username|first|upper }}
+              </div>
+              <div>
+                <div class="small fw-semibold">{{ depot.agent.get_full_name|default:depot.agent.username }}</div>
+                <div class="text-muted" style="font-size:.7rem">{{ depot.agent.get_role_display|default:depot.agent.role }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge bg-light text-dark border">{{ depot.categorie|default:"Non précisé" }}</span></td>
+          <td>{{ depot.date_depot|date:"d/m/Y H:i" }}</td>
+          <td>{{ depot.date_reception|date:"d/m/Y"|default:"—" }}</td>
+          <td>
+            {% if depot.fichier %}
+              <i class="bi bi-paperclip text-success" title="{{ depot.fichier.name }}"></i>
+            {% else %}
+              <i class="bi bi-x text-muted"></i>
+            {% endif %}
+          </td>
+          <td>
+            {% if depot.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif depot.statut == 'ARCHIVE' %}
+              <span class="badge bg-success">Archivé</span>
+            {% else %}
+              <span class="badge bg-danger">Rejeté</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+            Aucun dépôt dans cette catégorie.
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&statut={{ statut_filtre }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&statut={{ statut_filtre }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.clickable-row').forEach(function(row) {
+  row.addEventListener('click', function() {
+    window.location.href = this.dataset.href;
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

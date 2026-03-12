@@ -1,0 +1,125 @@
+{% extends "archives/base.html" %}
+{% block title %}Mon profil — Archives ENSMG{% endblock %}
+{% block topbar_title %}Mon profil{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  <div class="col-lg-8">
+
+    <!-- Carte profil principal -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body py-4">
+        <div class="d-flex align-items-center gap-4">
+          <!-- Avatar -->
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+               style="width:80px;height:80px;font-size:2rem;background:var(--theme-color)">
+            {{ request.user.first_name|first|upper|default:request.user.username|first|upper }}
+          </div>
+          <div>
+            <h4 class="mb-1 fw-semibold">
+              {{ request.user.get_full_name|default:request.user.username }}
+            </h4>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <span class="badge rounded-pill" style="background:var(--theme-color)">
+                {{ request.user.get_role_display }}
+              </span>
+              {% if request.user.departement %}
+              <span class="badge bg-light text-dark border">
+                <i class="bi bi-building me-1"></i>{{ request.user.departement.nom }}
+              </span>
+              {% endif %}
+              {% if request.user.is_active %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">
+                <i class="bi bi-check-circle me-1"></i>Compte actif
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informations du compte -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-person-vcard me-2" style="color:var(--theme-color)"></i>
+          Informations du compte
+        </h6>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted small">Nom d'utilisateur</dt>
+          <dd class="col-sm-8"><code>{{ request.user.username }}</code></dd>
+
+          <dt class="col-sm-4 text-muted small">Nom complet</dt>
+          <dd class="col-sm-8">{{ request.user.get_full_name|default:"—" }}</dd>
+
+          <dt class="col-sm-4 text-muted small">Adresse e-mail</dt>
+          <dd class="col-sm-8">{{ request.user.email|default:"—" }}</dd>
+
+          <dt class="col-sm-4 text-muted small">Téléphone</dt>
+          <dd class="col-sm-8">{{ request.user.telephone|default:"—" }}</dd>
+
+          <dt class="col-sm-4 text-muted small">Rôle</dt>
+          <dd class="col-sm-8">{{ request.user.get_role_display }}</dd>
+
+          <dt class="col-sm-4 text-muted small">Département</dt>
+          <dd class="col-sm-8">{{ request.user.departement.nom|default:"Non rattaché" }}</dd>
+
+          <dt class="col-sm-4 text-muted small">Membre depuis</dt>
+          <dd class="col-sm-8">{{ request.user.date_joined|date:"d/m/Y" }}</dd>
+
+          <dt class="col-sm-4 text-muted small">Dernière connexion</dt>
+          <dd class="col-sm-8">{{ request.user.last_login|date:"d/m/Y H:i"|default:"—" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Statistiques d'activité -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-bar-chart me-2" style="color:var(--theme-color)"></i>
+          Mon activité
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-4 text-center">
+            <div class="rounded-3 py-3"
+                 style="background:rgba(91,47,138,.06)">
+              <div class="fw-bold fs-3" style="color:var(--theme-color)">{{ nb_depots }}</div>
+              <div class="text-muted small">Dépôt{{ nb_depots|pluralize }}</div>
+            </div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="rounded-3 py-3"
+                 style="background:rgba(26,82,118,.06)">
+              <div class="fw-bold fs-3" style="color:#1a5276">{{ nb_prets }}</div>
+              <div class="text-muted small">Demande{{ nb_prets|pluralize }} de prêt</div>
+            </div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="rounded-3 py-3" style="background:rgba(40,167,69,.06)">
+              <div class="fw-bold fs-3 text-success">{{ nb_recherches }}</div>
+              <div class="text-muted small">Recherche{{ nb_recherches|pluralize }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 justify-content-between">
+      <a href="{% url 'archives:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+      </a>
+      <a href="{% url 'archives:logout' %}" class="btn btn-outline-danger">
+        <i class="bi bi-box-arrow-right me-1"></i>Se déconnecter
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

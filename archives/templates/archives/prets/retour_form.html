@@ -1,0 +1,46 @@
+{% extends "archives/base.html" %}
+{% block title %}Retour prêt — Archives ENSMG{% endblock %}
+{% block topbar_title %}Enregistrement du retour{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-3 d-flex align-items-center gap-3">
+        <i class="bi bi-arrow-return-left fs-3 text-warning"></i>
+        <div>
+          <div class="fw-bold">{{ pret.demande.document.titre }}</div>
+          <small class="text-muted">
+            Emprunteur : {{ pret.demande.demandeur.get_full_name|default:pret.demande.demandeur.username }} —
+            Retour prévu : {{ pret.date_retour_prevue|date:"d/m/Y"|default:"Non défini" }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-clipboard-check me-2"></i>Enregistrer le retour</h6>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:archiviste_prets' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-check-lg me-1"></i>Confirmer le retour
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

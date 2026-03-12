@@ -1,0 +1,171 @@
+{% extends "archives/base.html" %}
+{% block title %}Gestion des prêts — Archives ENSMG{% endblock %}
+{% block topbar_title %}Gestion des demandes de prêt{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="?statut=EN_ATTENTE"
+       class="btn btn-sm {% if statut_filtre == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+      <i class="bi bi-hourglass-split me-1"></i>En attente
+      {% if statut_filtre == 'EN_ATTENTE' %}({{ page_obj.paginator.count }}){% endif %}
+    </a>
+    <a href="?statut=ACCORDEE"
+       class="btn btn-sm {% if statut_filtre == 'ACCORDEE' %}btn-success{% else %}btn-outline-success{% endif %}">
+      <i class="bi bi-check-circle me-1"></i>Accordées
+    </a>
+    <a href="?statut=REFUSEE"
+       class="btn btn-sm {% if statut_filtre == 'REFUSEE' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+      <i class="bi bi-x-circle me-1"></i>Refusées
+    </a>
+    <a href="?statut=CLOTUREE"
+       class="btn btn-sm {% if statut_filtre == 'CLOTUREE' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi bi-archive me-1"></i>Clôturées
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-bookmarks-fill me-2" style="color:#1a5276"></i>
+      Demandes de prêt —
+      {% if statut_filtre == 'EN_ATTENTE' %}En attente
+      {% elif statut_filtre == 'ACCORDEE' %}Accordées
+      {% elif statut_filtre == 'REFUSEE' %}Refusées
+      {% elif statut_filtre == 'CLOTUREE' %}Clôturées
+      {% else %}Toutes{% endif %}
+      <span class="text-muted fw-normal">({{ page_obj.paginator.count }})</span>
+    </h6>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Demandeur</th>
+            <th>Document</th>
+            <th>Type</th>
+            <th>Date demande</th>
+            <th>Durée</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for demande in demandes %}
+        <tr class="clickable-row" data-href="{% url 'archives:archiviste_pret_detail' demande.pk %}"
+            style="cursor:pointer">
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center"
+                   style="width:32px;height:32px;font-size:.75rem;font-weight:600">
+                {{ demande.demandeur.first_name|first|default:demande.demandeur.username|first|upper }}
+              </div>
+              <div>
+                <div class="small fw-semibold">
+                  {{ demande.demandeur.get_full_name|default:demande.demandeur.username }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem">
+                  {{ demande.demandeur.get_role_display|default:demande.demandeur.role }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <a href="{% url 'archives:document_detail' demande.document.pk %}"
+               class="text-decoration-none fw-semibold small">
+              {{ demande.document.titre|truncatechars:40 }}
+            </a>
+            <br>
+            <code class="text-muted" style="font-size:.65rem">{{ demande.document.identifiant }}</code>
+          </td>
+          <td>
+            {% if demande.type_demande == 'PHYSIQUE' %}
+              <span class="badge bg-info text-dark"><i class="bi bi-file-earmark me-1"></i>Physique</span>
+            {% else %}
+              <span class="badge bg-primary"><i class="bi bi-download me-1"></i>Numérique</span>
+            {% endif %}
+          </td>
+          <td>{{ demande.date_demande|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if demande.type_demande == 'NUMERIQUE' %}
+              {{ demande.duree_acces_heures|default:"24" }}h
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDEE' %}
+              <span class="badge bg-success">Accordée</span>
+            {% elif demande.statut == 'REFUSEE' %}
+              <span class="badge bg-danger">Refusée</span>
+            {% else %}
+              <span class="badge bg-secondary">Clôturée</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:.72rem">
+                <i class="bi bi-pencil me-1"></i>À traiter
+              </span>
+            {% else %}
+              <i class="bi bi-eye text-secondary"></i>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-bookmarks fs-2 d-block mb-2 opacity-50"></i>
+            Aucune demande dans cette catégorie.
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&statut={{ statut_filtre }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&statut={{ statut_filtre }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.clickable-row').forEach(function(row) {
+  row.addEventListener('click', function(e) {
+    if (!e.target.closest('a, button')) {
+      window.location.href = this.dataset.href;
+    }
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

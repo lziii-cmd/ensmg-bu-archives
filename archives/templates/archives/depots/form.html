@@ -1,0 +1,38 @@
+{% extends "archives/base.html" %}
+{% block title %}Déposer un document — Archives ENSMG{% endblock %}
+{% block topbar_title %}Nouveau dépôt de document{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-upload me-2 text-primary"></i>Déposer un document aux archives</h5>
+        <small class="text-muted">Le document sera traité par un archiviste avant d'être intégré au fonds.</small>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              {{ field.label }}
+              {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:mes_depots' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-upload me-1"></i>Soumettre le dépôt
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

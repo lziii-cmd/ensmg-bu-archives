@@ -1,0 +1,72 @@
+{% extends "archives/base.html" %}
+{% block title %}Demande de prêt — Archives ENSMG{% endblock %}
+{% block topbar_title %}Demande de prêt{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-3 d-flex align-items-center gap-3">
+        <i class="bi bi-file-earmark-text fs-3 text-primary"></i>
+        <div>
+          <div class="fw-bold">{{ document.titre }}</div>
+          <small class="text-muted">{{ document.type_document|default:"" }} — Cote : {{ document.cote|default:"N/A" }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-bookmark-plus me-2 text-primary"></i>Formulaire de demande</h6>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Type de prêt <span class="text-danger">*</span></label>
+            {{ form.type_pret }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Motif <span class="text-danger">*</span></label>
+            {{ form.motif }}
+            {% if form.motif.errors %}<div class="text-danger small">{{ form.motif.errors.0 }}</div>{% endif %}
+            <div class="form-text">Minimum 20 caractères.</div>
+          </div>
+          <div id="champ-retour" class="mb-3" style="display:none;">
+            <label class="form-label fw-semibold">Date de retour prévue <span class="text-danger">*</span></label>
+            {{ form.date_retour_prevue }}
+            {% if form.date_retour_prevue.errors %}<div class="text-danger small">{{ form.date_retour_prevue.errors.0 }}</div>{% endif %}
+          </div>
+          <div id="champ-duree" class="mb-3">
+            <label class="form-label fw-semibold">Durée d'accès numérique (heures)</label>
+            {{ form.duree_acces_heures }}
+            <div class="form-text">Durée maximale : 720h (30 jours).</div>
+          </div>
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:document_detail' document.pk %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-send me-1"></i>Soumettre la demande
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const selectType = document.querySelector('[name="type_pret"]');
+  const champRetour = document.getElementById('champ-retour');
+  const champDuree = document.getElementById('champ-duree');
+
+  function toggleChamps() {
+    const val = selectType.value;
+    champRetour.style.display = val === 'PHYSIQUE' ? 'block' : 'none';
+    champDuree.style.display = val === 'NUMERIQUE' ? 'block' : 'none';
+  }
+  selectType.addEventListener('change', toggleChamps);
+  toggleChamps();
+</script>
+{% endblock %}
+{% endblock %}

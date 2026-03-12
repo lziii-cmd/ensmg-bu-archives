@@ -1,0 +1,130 @@
+{% extends "archives/base.html" %}
+{% block title %}Mes recherches documentaires — Archives ENSMG{% endblock %}
+{% block topbar_title %}Mes recherches documentaires{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div></div>
+  <a href="{% url 'archives:nouvelle_recherche' %}" class="btn text-white"
+     style="background:#5b2f8a">
+    <i class="bi bi-plus-lg me-1"></i>Nouvelle recherche
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-search-heart me-2" style="color:#5b2f8a"></i>
+      Mes demandes de recherche ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>N°</th>
+            <th>Description recherchée</th>
+            <th>Catégorie</th>
+            <th>Date demande</th>
+            <th>Statut</th>
+            <th>Résultat</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for demande in demandes %}
+        <tr>
+          <td><code style="font-size:.75rem">#{{ demande.pk }}</code></td>
+          <td>
+            <span class="fw-semibold small">{{ demande.description|truncatechars:60 }}</span>
+            {% if demande.service_producteur %}
+            <br>
+            <span class="text-muted" style="font-size:.72rem">
+              <i class="bi bi-building me-1"></i>{{ demande.service_producteur }}
+            </span>
+            {% endif %}
+          </td>
+          <td><span class="small text-muted">{{ demande.categorie|default:"—" }}</span></td>
+          <td><span class="small">{{ demande.date_demande|date:"d/m/Y" }}</span></td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDEE' %}
+              <span class="badge bg-success">Document trouvé</span>
+            {% else %}
+              <span class="badge bg-danger">Non trouvé</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if demande.statut == 'ACCORDEE' and demande.document_fourni %}
+              <a href="{% url 'archives:document_detail' demande.document_fourni.pk %}"
+                 class="btn btn-sm btn-outline-success" title="Accéder au document">
+                <i class="bi bi-folder2-open me-1"></i>
+                {{ demande.document_fourni.identifiant }}
+              </a>
+            {% elif demande.statut == 'REFUSEE' and demande.motif_refus %}
+              <button type="button" class="btn btn-sm btn-outline-danger"
+                      data-bs-toggle="popover"
+                      data-bs-trigger="hover focus"
+                      data-bs-title="Motif du refus"
+                      data-bs-content="{{ demande.motif_refus }}"
+                      title="Voir motif">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            {% elif demande.statut == 'EN_ATTENTE' %}
+              <span class="text-muted small fst-italic">En cours de traitement…</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-5">
+            <i class="bi bi-search-heart fs-2 d-block mb-2 opacity-50"></i>
+            Vous n'avez effectué aucune demande de recherche.
+            <br>
+            <a href="{% url 'archives:nouvelle_recherche' %}" class="btn btn-sm mt-2"
+               style="background:#5b2f8a;color:white">
+              <i class="bi bi-plus-lg me-1"></i>Faire une recherche
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+    new bootstrap.Popover(el);
+  });
+});
+</script>
+{% endblock %}

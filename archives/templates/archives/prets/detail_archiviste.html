@@ -1,0 +1,284 @@
+{% extends "archives/base.html" %}
+{% block title %}Demande de prêt #{{ demande.pk }} — Archives ENSMG{% endblock %}
+{% block topbar_title %}Traitement de la demande de prêt{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'archives:archiviste_prets' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+  </a>
+</div>
+
+<div class="row g-3">
+  <!-- Colonne gauche : info de la demande -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-person-lines-fill me-2" style="color:#1a5276"></i>Informations de la demande
+        </h6>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">Demandeur</dt>
+          <dd class="col-7 fw-semibold">
+            {{ demande.demandeur.get_full_name|default:demande.demandeur.username }}
+            <br>
+            <span class="badge bg-light text-dark border">
+              {{ demande.demandeur.get_role_display|default:demande.demandeur.role }}
+            </span>
+          </dd>
+
+          <dt class="col-5 text-muted">Date demande</dt>
+          <dd class="col-7">{{ demande.date_demande|date:"d/m/Y H:i" }}</dd>
+
+          <dt class="col-5 text-muted">Type</dt>
+          <dd class="col-7">
+            {% if demande.type_demande == 'PHYSIQUE' %}
+              <span class="badge bg-info text-dark"><i class="bi bi-file-earmark me-1"></i>Physique</span>
+            {% else %}
+              <span class="badge bg-primary"><i class="bi bi-download me-1"></i>Numérique</span>
+            {% endif %}
+          </dd>
+
+          {% if demande.type_demande == 'NUMERIQUE' %}
+          <dt class="col-5 text-muted">Durée souhaitée</dt>
+          <dd class="col-7">{{ demande.duree_acces_heures|default:"24" }}h</dd>
+          {% endif %}
+
+          <dt class="col-5 text-muted">Statut actuel</dt>
+          <dd class="col-7">
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDEE' %}
+              <span class="badge bg-success">Accordée</span>
+            {% elif demande.statut == 'REFUSEE' %}
+              <span class="badge bg-danger">Refusée</span>
+            {% else %}
+              <span class="badge bg-secondary">Clôturée</span>
+            {% endif %}
+          </dd>
+
+          <dt class="col-5 text-muted">Motif</dt>
+          <dd class="col-7">{{ demande.motif|default:"—" }}</dd>
+
+          {% if demande.traite_par %}
+          <dt class="col-5 text-muted">Traité par</dt>
+          <dd class="col-7">{{ demande.traite_par.get_full_name|default:demande.traite_par.username }}</dd>
+          <dt class="col-5 text-muted">Date traitement</dt>
+          <dd class="col-7">{{ demande.date_traitement|date:"d/m/Y H:i" }}</dd>
+          {% endif %}
+
+          {% if demande.motif_refus %}
+          <dt class="col-5 text-muted">Motif refus</dt>
+          <dd class="col-7 text-danger">{{ demande.motif_refus }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Document concerné -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-file-earmark me-2 text-secondary"></i>Document concerné
+        </h6>
+      </div>
+      <div class="card-body small">
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted">Titre</dt>
+          <dd class="col-7">
+            <a href="{% url 'archives:document_detail' demande.document.pk %}"
+               class="fw-semibold text-decoration-none">
+              {{ demande.document.titre|truncatechars:50 }}
+            </a>
+          </dd>
+          <dt class="col-5 text-muted">Identifiant</dt>
+          <dd class="col-7"><code>{{ demande.document.identifiant }}</code></dd>
+          <dt class="col-5 text-muted">Catégorie</dt>
+          <dd class="col-7">{{ demande.document.categorie|default:"—" }}</dd>
+          <dt class="col-5 text-muted">Confidentialité</dt>
+          <dd class="col-7">
+            <span class="badge bg-light text-dark border">
+              {{ demande.document.get_confidentialite_display }}
+            </span>
+          </dd>
+          <dt class="col-5 text-muted">Fichier numérique</dt>
+          <dd class="col-7">
+            {% if demande.document.fichier %}
+              <i class="bi bi-check-circle text-success me-1"></i>Disponible
+            {% else %}
+              <i class="bi bi-x-circle text-muted me-1"></i>Non disponible
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colonne droite : formulaire de décision -->
+  <div class="col-lg-7">
+    {% if demande.statut == 'EN_ATTENTE' %}
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-pencil-square me-2 text-warning"></i>Décision sur la demande
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <!-- Décision -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              Décision <span class="text-danger">*</span>
+            </label>
+            {{ form.decision }}
+          </div>
+
+          <!-- Champs pour ACCORDEE -->
+          <div id="champs-accord" style="display:none">
+            {% if demande.type_demande == 'PHYSIQUE' %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Date de retour prévue
+              </label>
+              {{ form.date_retour_prevue }}
+              <div class="form-text">Laisser vide pour 14 jours par défaut.</div>
+              {% if form.date_retour_prevue.errors %}
+              <div class="text-danger small mt-1">{{ form.date_retour_prevue.errors.0 }}</div>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Durée d'accès numérique (heures)
+              </label>
+              {{ form.duree_acces_heures }}
+              <div class="form-text">
+                Durée souhaitée par le demandeur : {{ demande.duree_acces_heures|default:"24" }}h.
+              </div>
+              {% if form.duree_acces_heures.errors %}
+              <div class="text-danger small mt-1">{{ form.duree_acces_heures.errors.0 }}</div>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Champs pour REFUSEE -->
+          <div id="champs-refus" style="display:none">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Motif du refus <span class="text-danger">*</span>
+              </label>
+              {{ form.motif_refus }}
+              {% if form.motif_refus.errors %}
+              <div class="text-danger small mt-1">{{ form.motif_refus.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">Ce motif sera communiqué au demandeur via notification.</div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:archiviste_prets' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i>Annuler
+            </a>
+            <button type="submit" id="btn-submit" class="btn btn-primary" disabled>
+              <i class="bi bi-check-lg me-1"></i>Valider
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% else %}
+
+    <!-- Demande déjà traitée -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5">
+        {% if demande.statut == 'ACCORDEE' %}
+          <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-check-circle-fill text-success fs-1"></i>
+          </div>
+          <h5 class="fw-semibold">Demande accordée</h5>
+          <p class="text-muted small">
+            Le demandeur a été notifié.
+            {% if demande.type_demande == 'NUMERIQUE' %}Un accès numérique temporaire a été créé.{% endif %}
+          </p>
+          {% if demande.pretdocument_set.exists %}
+            {% with pret=demande.pretdocument_set.first %}
+            <div class="card bg-light mt-3 text-start">
+              <div class="card-body small">
+                <strong>Bon de prêt :</strong> <code>{{ pret.numero_bon }}</code><br>
+                <strong>Retour prévu :</strong> {{ pret.date_retour_prevue|date:"d/m/Y"|default:"—" }}<br>
+                <strong>Statut :</strong>
+                {% if pret.statut == 'EN_COURS' %}<span class="badge bg-primary">En cours</span>
+                {% elif pret.statut == 'RETOURNE' %}<span class="badge bg-success">Retourné</span>
+                {% elif pret.statut == 'EN_RETARD' %}<span class="badge bg-warning text-dark">En retard</span>
+                {% else %}<span class="badge bg-danger">Perdu</span>{% endif %}
+                {% if pret.statut == 'EN_COURS' %}
+                <a href="{% url 'archives:retour_pret' pret.pk %}" class="btn btn-sm btn-outline-success ms-2">
+                  <i class="bi bi-arrow-return-left me-1"></i>Enregistrer le retour
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            {% endwith %}
+          {% endif %}
+
+        {% elif demande.statut == 'REFUSEE' %}
+          <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-x-circle-fill text-danger fs-1"></i>
+          </div>
+          <h5 class="fw-semibold">Demande refusée</h5>
+          {% if demande.motif_refus %}
+          <div class="alert alert-warning text-start mt-3">
+            <strong>Motif :</strong> {{ demande.motif_refus }}
+          </div>
+          {% endif %}
+
+        {% else %}
+          <div class="rounded-circle bg-secondary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-archive text-secondary fs-1"></i>
+          </div>
+          <h5 class="fw-semibold">Demande clôturée</h5>
+          <p class="text-muted small">Le document a été retourné et la demande est clôturée.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const selectDecision = document.getElementById('id_decision');
+  const champsAccord   = document.getElementById('champs-accord');
+  const champsRefus    = document.getElementById('champs-refus');
+  const btnSubmit      = document.getElementById('btn-submit');
+
+  function toggleChamps() {
+    const val = selectDecision ? selectDecision.value : '';
+    if (champsAccord) champsAccord.style.display = val === 'ACCORDEE' ? 'block' : 'none';
+    if (champsRefus)  champsRefus.style.display  = val === 'REFUSEE'  ? 'block' : 'none';
+    if (btnSubmit)    btnSubmit.disabled = !val;
+  }
+
+  if (selectDecision) {
+    selectDecision.addEventListener('change', toggleChamps);
+    toggleChamps();
+  }
+</script>
+{% endblock %}
+{% endblock %}

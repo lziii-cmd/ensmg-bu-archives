@@ -1,0 +1,145 @@
+{% extends "archives/base.html" %}
+{% block title %}Reformuler un dépôt — Archives ENSMG{% endblock %}
+{% block topbar_title %}Reformulation de dépôt{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <!-- Alerte motif de refus -->
+    <div class="alert alert-danger border-0 shadow-sm mb-4" style="border-left:4px solid #dc3545 !important">
+      <div class="d-flex align-items-start gap-3">
+        <i class="bi bi-x-octagon-fill text-danger fs-4 flex-shrink-0 mt-1"></i>
+        <div>
+          <div class="fw-semibold mb-1">Dépôt n° {{ depot_original.numero_recepisse }} — Rejeté</div>
+          {% if depot_original.motif_rejet %}
+          <div class="small mb-2">
+            <strong>Motif du rejet :</strong> {{ depot_original.motif_rejet }}
+          </div>
+          {% endif %}
+          <div class="small text-muted">
+            Corrigez les informations ci-dessous et soumettez à nouveau votre dépôt.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire de reformulation -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-arrow-clockwise me-2 text-warning"></i>Reformuler le dépôt
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <!-- Titre -->
+          <div class="mb-4">
+            <label for="{{ form.titre.id_for_label }}" class="form-label fw-semibold">
+              Titre du document <span class="text-danger">*</span>
+            </label>
+            {{ form.titre }}
+            {% if form.titre.errors %}
+            <div class="text-danger small mt-1">{{ form.titre.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Fichier -->
+          <div class="mb-4">
+            <label for="{{ form.fichier.id_for_label }}" class="form-label fw-semibold">
+              Fichier <span class="text-danger">*</span>
+            </label>
+            {% if depot_original.fichier %}
+            <div class="alert alert-info small py-2 mb-2">
+              <i class="bi bi-paperclip me-1"></i>
+              Fichier précédent : <strong>{{ depot_original.fichier.name|cut:"depots/" }}</strong>
+              — vous pouvez en déposer un nouveau ci-dessous ou laisser vide pour conserver l'ancien.
+            </div>
+            {% endif %}
+            <div class="border rounded p-3 bg-light">
+              {{ form.fichier }}
+              <div class="text-muted small mt-2">
+                <i class="bi bi-cloud-arrow-up me-1"></i>
+                Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 50 Mo)
+              </div>
+            </div>
+            {% if form.fichier.errors %}
+            <div class="text-danger small mt-1">{{ form.fichier.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Dates -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="{{ form.date_reception.id_for_label }}" class="form-label fw-semibold">
+                Date de réception / production <span class="text-danger">*</span>
+              </label>
+              {{ form.date_reception }}
+              {% if form.date_reception.errors %}
+              <div class="text-danger small mt-1">{{ form.date_reception.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Date de dépôt</label>
+              <div class="form-control bg-light text-muted" style="cursor:not-allowed">
+                <i class="bi bi-calendar-check me-1 text-success"></i>Aujourd'hui (automatique)
+              </div>
+            </div>
+          </div>
+
+          <!-- Catégorie -->
+          <div class="mb-4">
+            <label for="{{ form.categorie.id_for_label }}" class="form-label fw-semibold">
+              Catégorie <span class="text-muted fw-normal">(facultatif)</span>
+            </label>
+            {{ form.categorie }}
+            {% if form.categorie.errors %}
+            <div class="text-danger small mt-1">{{ form.categorie.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Description -->
+          <div class="mb-4">
+            <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">
+              Description <span class="text-muted fw-normal">(facultatif)</span>
+            </label>
+            {{ form.description }}
+            <div class="form-text">Ajoutez des précisions pour aider l'archiviste à mieux traiter votre dépôt.</div>
+            {% if form.description.errors %}
+            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Mots-clés -->
+          <div class="mb-4">
+            <label for="{{ form.mots_cles.id_for_label }}" class="form-label fw-semibold">
+              Mots-clés <span class="text-muted fw-normal">(facultatif)</span>
+            </label>
+            {{ form.mots_cles }}
+            {% if form.mots_cles.errors %}
+            <div class="text-danger small mt-1">{{ form.mots_cles.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:mes_depots' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i>Annuler
+            </a>
+            <button type="submit" class="btn btn-warning text-dark fw-semibold">
+              <i class="bi bi-send me-1"></i>Soumettre la reformulation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aperçu — Thème ENSMG Bleu Marine & Or</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap">
+<style>
+:root {
+  --bleu-marine:#1F3A6E; --bleu-marine-dark:#142850; --bleu-marine-light:#2A4F96;
+  --or:#C9A84C; --or-light:#E3C47A; --or-dark:#A8872A;
+  --white:#FFFFFF; --off-white:#F7F8FC; --gray-100:#F3F4F6;
+  --gray-200:#E5E7EB; --gray-400:#9CA3AF; --gray-600:#6B7280; --gray-800:#1F2937;
+  --text-dark:#0D1B2A;
+  --font-serif:'Playfair Display',Georgia,serif;
+  --font-sans:'Source Sans 3','Segoe UI',system-ui,sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:0 4px 12px rgba(31,58,110,.12);
+  --shadow-lg:0 8px 30px rgba(31,58,110,.16);
+  --radius:6px; --radius-lg:12px;
+  --transition:.3s cubic-bezier(.4,0,.2,1);
+  --container-max:1200px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-sans);color:var(--text-dark);background:var(--white);line-height:1.7;margin:0;overflow-x:hidden}
+h1,h2,h3,h4{font-family:var(--font-serif);font-weight:700;line-height:1.25;color:var(--bleu-marine)}
+a{color:var(--bleu-marine);text-decoration:none;transition:color var(--transition)}
+a:hover{color:var(--or)}
+
+/* Topbar */
+.site-topbar{background:var(--bleu-marine-dark);color:rgba(255,255,255,.75);font-size:.8rem;padding:.4rem 0}
+.site-topbar a{color:rgba(255,255,255,.75)}.site-topbar a:hover{color:var(--or)}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+
+/* Header */
+.site-header{background:var(--bleu-marine);position:sticky;top:0;z-index:1000;box-shadow:0 2px 20px rgba(0,0,0,.25)}
+.header-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;min-height:70px}
+.site-logo{display:flex;align-items:center;gap:.75rem;text-decoration:none}
+.school-name{display:block;font-family:var(--font-serif);font-size:1rem;font-weight:700;color:var(--white);line-height:1.2;letter-spacing:.02em}
+.school-acronym{display:block;font-size:.75rem;color:var(--or);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.site-nav ul{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:0}
+.site-nav > ul > li{position:relative}
+.site-nav > ul > li > a{display:block;padding:1.25rem .9rem;color:rgba(255,255,255,.88);font-size:.875rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;transition:color var(--transition),background var(--transition);white-space:nowrap}
+.site-nav > ul > li > a:hover,.site-nav > ul > li.active > a{color:var(--or);background:rgba(255,255,255,.06)}
+.site-nav ul ul{position:absolute;top:100%;left:0;min-width:220px;background:var(--white);border-top:3px solid var(--or);box-shadow:var(--shadow-lg);border-radius:0 0 var(--radius) var(--radius);display:none;flex-direction:column;z-index:100}
+.site-nav ul li:hover > ul{display:flex}
+.site-nav ul ul li a{display:block;padding:.6rem 1.1rem;color:var(--gray-800);font-size:.85rem;font-weight:500;transition:background var(--transition),color var(--transition),padding var(--transition);border-bottom:1px solid var(--gray-100)}
+.site-nav ul ul li a:hover{background:var(--off-white);color:var(--bleu-marine);padding-left:1.5rem}
+
+/* Hero */
+.hero-section{position:relative;background:linear-gradient(135deg,var(--bleu-marine-dark) 0%,var(--bleu-marine) 60%,var(--bleu-marine-light) 100%);color:var(--white);overflow:hidden;min-height:520px;display:flex;align-items:center}
+.hero-section::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(255,255,255,.015) 30px,rgba(255,255,255,.015) 60px)}
+.hero-deco{position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to top,var(--white),transparent)}
+.hero-inner{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:5rem 1.5rem;width:100%}
+.hero-eyebrow{display:inline-block;background:var(--or);color:var(--bleu-marine-dark);font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.3rem .8rem;border-radius:2px;margin-bottom:1.25rem}
+.hero-title{font-family:var(--font-serif);font-size:clamp(2rem,4vw,3rem);font-weight:700;line-height:1.15;margin-bottom:1.25rem;color:var(--white);max-width:700px}
+.hero-title span{color:var(--or)}
+.hero-subtitle{font-size:1.1rem;color:rgba(255,255,255,.8);max-width:600px;margin-bottom:2rem;line-height:1.7}
+.hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
+.btn-primary-ensmg{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.75rem;border-radius:var(--radius);font-weight:600;font-size:.9rem;background:var(--or);color:var(--bleu-marine-dark);border:2px solid var(--or);transition:all var(--transition);text-decoration:none}
+.btn-primary-ensmg:hover{background:var(--or-dark);border-color:var(--or-dark);color:var(--white);transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,.4)}
+.btn-outline-ensmg{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.75rem;border-radius:var(--radius);font-weight:600;font-size:.9rem;background:transparent;color:var(--white);border:2px solid rgba(255,255,255,.5);transition:all var(--transition);text-decoration:none}
+.btn-outline-ensmg:hover{background:rgba(255,255,255,.1);border-color:var(--white);color:var(--white)}
+
+/* Stats */
+.stats-bar{background:var(--bleu-marine);padding:2.5rem 0}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.stat-item{text-align:center}
+.stat-number{font-family:var(--font-serif);font-size:2.5rem;font-weight:700;color:var(--or);line-height:1}
+.stat-label{font-size:.8rem;color:rgba(255,255,255,.72);text-transform:uppercase;letter-spacing:.06em;margin-top:.3rem}
+
+/* Section */
+.section{padding:5rem 0}
+.section-bg{background:var(--off-white)}
+.container-ensmg{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.section-eyebrow{display:inline-block;color:var(--or);font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem}
+.section-title{font-size:clamp(1.6rem,3vw,2.25rem);margin-bottom:1rem;position:relative;padding-bottom:1rem}
+.section-title::after{content:'';position:absolute;bottom:0;left:0;width:60px;height:3px;background:var(--or);border-radius:2px}
+.text-center .section-title::after{left:50%;transform:translateX(-50%)}
+.section-lead{font-size:1.05rem;color:var(--gray-600);max-width:640px}
+.text-center .section-lead{margin:0 auto}
+.section-header{margin-bottom:3.5rem}
+
+/* Program cards */
+.program-card{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);padding:2rem;position:relative;overflow:hidden;transition:box-shadow var(--transition),transform var(--transition);height:100%}
+.program-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--bleu-marine),var(--or))}
+.program-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.program-level{display:inline-block;background:rgba(31,58,110,.08);color:var(--bleu-marine);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.25rem .65rem;border-radius:20px;margin-bottom:.85rem}
+.program-title{font-size:1.15rem;font-weight:700;color:var(--bleu-marine);margin-bottom:.6rem;line-height:1.35}
+.program-desc{font-size:.875rem;color:var(--gray-600);line-height:1.65;margin-bottom:1.25rem}
+.btn-blue{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:var(--bleu-marine);color:var(--white);border:2px solid var(--bleu-marine);border-radius:var(--radius);font-weight:600;font-size:.875rem;transition:all var(--transition);text-decoration:none}
+.btn-blue:hover{background:var(--or);border-color:var(--or);color:var(--bleu-marine-dark);transform:translateY(-2px)}
+
+/* Director section */
+.director-section{background:var(--off-white);padding:5rem 0}
+.director-card{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:grid;grid-template-columns:300px 1fr;gap:4rem;align-items:center}
+.director-photo-placeholder{width:100%;aspect-ratio:3/4;background:linear-gradient(160deg,var(--bleu-marine),var(--bleu-marine-light));border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:4rem;font-weight:700;color:rgba(255,255,255,.3);box-shadow:var(--shadow-lg)}
+.director-quote{position:relative;margin-bottom:1.5rem}
+.director-quote::before{content:'"';font-family:var(--font-serif);font-size:7rem;color:var(--or);opacity:.2;position:absolute;top:-2rem;left:-1rem;line-height:1;pointer-events:none}
+.director-quote p{font-style:italic;font-size:1rem;color:var(--gray-800);line-height:1.75;position:relative;z-index:1}
+.director-name{font-size:1.1rem;font-weight:700;color:var(--bleu-marine)}
+.director-title{font-size:.85rem;color:var(--or-dark);font-weight:600}
+
+/* Lab cards */
+.lab-card{display:flex;gap:1.5rem;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);padding:1.75rem;transition:box-shadow var(--transition);align-items:flex-start}
+.lab-card:hover{box-shadow:var(--shadow-md)}
+.lab-icon{width:56px;height:56px;flex-shrink:0;background:linear-gradient(135deg,var(--bleu-marine),var(--bleu-marine-light));border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--or)}
+.lab-name{font-size:1.05rem;font-weight:700;color:var(--bleu-marine);margin-bottom:.4rem}
+.lab-desc{font-size:.875rem;color:var(--gray-600);line-height:1.6}
+
+/* News */
+.news-list{display:flex;flex-direction:column;gap:1.5rem}
+.news-item{display:flex;gap:1.25rem;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);overflow:hidden;transition:box-shadow var(--transition),transform var(--transition)}
+.news-item:hover{box-shadow:var(--shadow-md);transform:translateX(4px)}
+.news-date-badge{flex-shrink:0;width:70px;background:var(--bleu-marine);color:var(--white);text-align:center;padding:1rem .5rem;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.news-date-day{font-family:var(--font-serif);font-size:1.75rem;font-weight:700;color:var(--or);line-height:1}
+.news-date-month{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem}
+.news-body{padding:1.1rem;flex:1}
+.news-tag{display:inline-block;background:rgba(201,168,76,.15);color:var(--or-dark);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.15rem .5rem;border-radius:20px;margin-bottom:.4rem}
+.news-title{font-size:.95rem;font-weight:700;color:var(--bleu-marine);line-height:1.35;margin-bottom:.3rem}
+.news-excerpt{font-size:.825rem;color:var(--gray-600);line-height:1.55}
+
+/* People */
+.people-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1.5rem}
+.person-card{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);overflow:hidden;text-align:center;transition:transform var(--transition),box-shadow var(--transition)}
+.person-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-md)}
+.person-avatar-placeholder{width:100%;height:160px;background:linear-gradient(160deg,var(--bleu-marine) 0%,var(--bleu-marine-light) 100%);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:2.5rem;font-weight:700;color:rgba(255,255,255,.4)}
+.person-body{padding:1rem}
+.person-name{font-size:.9rem;font-weight:700;color:var(--bleu-marine);margin-bottom:.2rem}
+.person-grade{font-size:.72rem;color:var(--or-dark);font-weight:600;margin-bottom:.3rem}
+.person-spec{font-size:.75rem;color:var(--gray-600)}
+
+/* CTA */
+.cta-banner{background:linear-gradient(135deg,var(--bleu-marine),var(--bleu-marine-light));color:var(--white);padding:4rem 0;text-align:center;position:relative;overflow:hidden}
+.cta-banner::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,255,255,.02) 10px,rgba(255,255,255,.02) 20px)}
+.cta-inner{position:relative;max-width:700px;margin:0 auto;padding:0 1.5rem}
+.cta-banner h2{color:var(--white);font-size:2rem;margin-bottom:.75rem}
+.cta-banner p{color:rgba(255,255,255,.8);margin-bottom:2rem;font-size:1.05rem}
+.btn-gold{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.75rem;background:var(--or);color:var(--bleu-marine-dark);border:2px solid var(--or);border-radius:var(--radius);font-weight:700;font-size:.9rem;transition:all var(--transition);text-decoration:none}
+.btn-gold:hover{background:var(--or-dark);border-color:var(--or-dark);color:var(--white)}
+
+/* Footer */
+.site-footer{background:var(--bleu-marine-dark);color:rgba(255,255,255,.78);padding-top:4rem}
+.footer-grid{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:3rem;padding-bottom:3rem}
+.footer-col-title{font-family:var(--font-serif);font-size:1rem;font-weight:700;color:var(--white);margin-bottom:1.25rem;padding-bottom:.65rem;border-bottom:2px solid var(--or);display:inline-block}
+.footer-about p{font-size:.85rem;line-height:1.7;color:rgba(255,255,255,.65);margin-bottom:1.25rem}
+.footer-links{list-style:none;padding:0;margin:0}
+.footer-links li{margin-bottom:.5rem}
+.footer-links li a{color:rgba(255,255,255,.65);font-size:.85rem;transition:color var(--transition),padding-left var(--transition);display:flex;align-items:center;gap:.4rem}
+.footer-links li a::before{content:'›';color:var(--or)}
+.footer-links li a:hover{color:var(--or-light);padding-left:.4rem}
+.footer-contact-item{display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.85rem;font-size:.85rem;color:rgba(255,255,255,.65)}
+.footer-contact-icon{color:var(--or);font-size:1rem;flex-shrink:0;margin-top:.1rem}
+.footer-social{display:flex;gap:.75rem;margin-top:1rem}
+.footer-social a{width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:.85rem;transition:all var(--transition)}
+.footer-social a:hover{background:var(--or);border-color:var(--or);color:var(--bleu-marine-dark)}
+.footer-bottom{background:rgba(0,0,0,.25);padding:1.1rem 0;border-top:1px solid rgba(255,255,255,.06)}
+.footer-bottom-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;font-size:.78rem;color:rgba(255,255,255,.45)}
+.footer-bottom a{color:rgba(255,255,255,.55)}.footer-bottom a:hover{color:var(--or)}
+
+@media(max-width:768px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .director-card{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .people-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+  .people-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="site-topbar">
+  <div class="topbar-inner">
+    <div class="d-flex align-items-center gap-3">
+      <span><i class="bi bi-geo-alt-fill me-1"></i>UCAD, Dakar — Sénégal</span>
+      <span class="d-none d-md-inline"><i class="bi bi-telephone-fill me-1"></i>+221 33 824 23 45</span>
+      <span class="d-none d-md-inline"><i class="bi bi-envelope-fill me-1"></i>contact@ensmg.ucad.sn</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="#"><i class="bi bi-facebook"></i></a>
+      <a href="#"><i class="bi bi-twitter-x"></i></a>
+      <a href="#"><i class="bi bi-linkedin"></i></a>
+      <a href="#"><i class="bi bi-youtube"></i></a>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="#" class="site-logo">
+      <div>
+        <span class="school-name">École Nationale Supérieure<br>des Mines et de la Géologie</span>
+        <span class="school-acronym">ENSMG — UCAD Dakar</span>
+      </div>
+    </a>
+    <nav class="site-nav d-none d-lg-flex">
+      <ul>
+        <li class="active"><a href="#">Accueil</a></li>
+        <li>
+          <a href="#">Institut ▾</a>
+          <ul>
+            <li><a href="#">Vocation &amp; Ambition</a></li>
+            <li><a href="#">Gouvernance</a></li>
+            <li><a href="#">Enseignants</a></li>
+            <li><a href="#">Vie estudiantine</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">Formation ▾</a>
+          <ul>
+            <li><a href="#">Ingénieur Géologue</a></li>
+            <li><a href="#">Master Géotechnique</a></li>
+            <li><a href="#">Licence Pro Géotechnique</a></li>
+            <li><a href="#">Certification MOFI</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">Admissions ▾</a>
+          <ul>
+            <li><a href="#">Ingénieur Géologue</a></li>
+            <li><a href="#">Licence Pro Géotechnique</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">Recherches ▾</a>
+          <ul>
+            <li><a href="#">Lab. Pétro-structural</a></li>
+            <li><a href="#">Lab. Télédétection</a></li>
+            <li><a href="#">Lab. Géomatériaux</a></li>
+          </ul>
+        </li>
+        <li><a href="#">Entreprise</a></li>
+        <li><a href="#">Actualités</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero-section">
+  <div class="hero-deco"></div>
+  <div class="hero-inner">
+    <span class="hero-eyebrow">Excellence — Innovation — Afrique</span>
+    <h1 class="hero-title">
+      Former les <span>ingénieurs</span><br>de demain au cœur<br>des géosciences africaines
+    </h1>
+    <p class="hero-subtitle">
+      L'École Nationale Supérieure des Mines et de la Géologie forme depuis plus de 40 ans des ingénieurs et chercheurs de haut niveau, au service du développement durable du Sénégal et de l'Afrique.
+    </p>
+    <div class="hero-actions">
+      <a href="#" class="btn-primary-ensmg"><i class="bi bi-mortarboard-fill"></i> Candidater</a>
+      <a href="#" class="btn-outline-ensmg"><i class="bi bi-book-fill"></i> Nos formations</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-grid">
+    <div class="stat-item"><div class="stat-number">400+</div><div class="stat-label">Ingénieurs formés</div></div>
+    <div class="stat-item"><div class="stat-number">40 ans</div><div class="stat-label">D'excellence</div></div>
+    <div class="stat-item"><div class="stat-number">4</div><div class="stat-label">Programmes de formation</div></div>
+    <div class="stat-item"><div class="stat-number">3</div><div class="stat-label">Laboratoires de recherche</div></div>
+  </div>
+</div>
+
+<!-- FORMATIONS -->
+<section class="section">
+  <div class="container-ensmg">
+    <div class="section-header text-center">
+      <span class="section-eyebrow">Programmes académiques</span>
+      <h2 class="section-title">Nos formations</h2>
+      <p class="section-lead">Des cursus d'excellence en géosciences, ingénierie minière, géotechnique et modélisation financière minière.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="program-card">
+          <div class="program-level">Ingénieur</div>
+          <div class="program-title">Ingénieur Géologue</div>
+          <div class="program-desc">Formation d'ingénieurs en sciences de la Terre — géologie, hydrogéologie, géophysique et géotechnique.</div>
+          <a href="#" class="btn-blue">Découvrir <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="program-card">
+          <div class="program-level">Master</div>
+          <div class="program-title">Master Géotechnique</div>
+          <div class="program-desc">Former des masters sur des bases solides de géotechnique — théoriques et pratiques.</div>
+          <a href="#" class="btn-blue">Découvrir <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="program-card">
+          <div class="program-level">Licence Pro</div>
+          <div class="program-title">Licence Pro Géotechnique Géominier</div>
+          <div class="program-desc">Formation professionnalisante d'un an pour les titulaires d'un bac+2 en sciences.</div>
+          <a href="#" class="btn-blue">Découvrir <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="program-card">
+          <div class="program-level">Certification</div>
+          <div class="program-title">Certification MOFI</div>
+          <div class="program-desc">Modélisation financière des projets miniers — Cash Flow, TRI, VAN.</div>
+          <a href="#" class="btn-blue">Découvrir <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIRECTEUR -->
+<section class="director-section">
+  <div class="director-card">
+    <div>
+      <div class="director-photo-placeholder">MD</div>
+    </div>
+    <div>
+      <span class="section-eyebrow">Mot du Directeur</span>
+      <h2 class="section-title" style="padding-bottom:.75rem;margin-bottom:1.5rem;">Bienvenue à l'ENSMG</h2>
+      <div class="director-quote">
+        <p>Après près de 40 ans d'existence et près de 400 ingénieurs formés, l'Institut des sciences de la Terre (IST) a fait sa mutation pour devenir l'École Nationale Supérieure des Mines et de la Géologie (ENSMG). Face aux défis du secteur minier, des BTP, de l'eau et du secteur pétrolier, l'ENSMG s'est dotée d'un nouveau cadre juridique, pédagogique et environnemental.</p>
+        <p>Notre vision est de faire de l'école à l'horizon 2029 un label durable et attractif, contribuant fortement à l'émergence du Sénégal et de la sous-région Ouest Africaine.</p>
+      </div>
+      <div class="director-name">Pr. Mahamadane DIENE</div>
+      <div class="director-title">Directeur de l'ENSMG (ex IST)</div>
+    </div>
+  </div>
+</section>
+
+<!-- LABORATOIRES -->
+<section class="section">
+  <div class="container-ensmg">
+    <div class="section-header text-center">
+      <span class="section-eyebrow">Recherche scientifique</span>
+      <h2 class="section-title">Laboratoires de recherche</h2>
+      <p class="section-lead">Trois laboratoires d'excellence au service de la recherche appliquée en géosciences.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4"><div class="lab-card"><div class="lab-icon"><i class="bi bi-gem"></i></div><div><div class="lab-name">Laboratoire Pétro-structural</div><div class="lab-desc">Créé en 2013 avec le soutien de la coopération française. Analyse structurale et métallogénie des formations géologiques africaines.</div></div></div></div>
+      <div class="col-md-4"><div class="lab-card"><div class="lab-icon"><i class="bi bi-globe2"></i></div><div><div class="lab-name">Laboratoire de Télédétection</div><div class="lab-desc">Projets de recherche en partenariats internationaux — cartographie, ressources naturelles et surveillance environnementale.</div></div></div></div>
+      <div class="col-md-4"><div class="lab-card"><div class="lab-icon"><i class="bi bi-layers-fill"></i></div><div><div class="lab-name">Laboratoire Géomatériaux</div><div class="lab-desc">À l'avant-garde de l'innovation — enseignement, R&D et services dans les domaines de l'ingénierie géotechnique.</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTUALITES -->
+<section class="section section-bg">
+  <div class="container-ensmg">
+    <div class="section-header d-flex justify-content-between align-items-end flex-wrap gap-3">
+      <div>
+        <span class="section-eyebrow">À la une</span>
+        <h2 class="section-title mb-0">Actualités</h2>
+      </div>
+      <a href="#" class="btn-blue">Toutes les actualités <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="news-list">
+      <div class="news-item">
+        <div class="news-date-badge"><div class="news-date-day">16</div><div class="news-date-month">Juil 2024</div></div>
+        <div class="news-body">
+          <span class="news-tag">Recrutement</span>
+          <div class="news-title">Appel à candidature pour le recrutement d'un enseignant chercheur en ingénierie minière</div>
+          <div class="news-excerpt">L'ENSMG lance un appel à candidature pour le recrutement d'un enseignant chercheur dans le domaine de l'ingénierie minière.</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <div class="news-date-badge"><div class="news-date-day">10</div><div class="news-date-month">Nov 2023</div></div>
+        <div class="news-body">
+          <span class="news-tag">Institution</span>
+          <div class="news-title">Passation de service — Un nouveau directeur à la tête de l'ENSMG</div>
+          <div class="news-excerpt">L'École Nationale Supérieure des Mines et de la Géologie accueille un nouveau directeur.</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <div class="news-date-badge"><div class="news-date-day">15</div><div class="news-date-month">Jan 2023</div></div>
+        <div class="news-body">
+          <span class="news-tag">Formation</span>
+          <div class="news-title">Lancement de la nouvelle Certification MOFI — Modélisation Financière des Projets Miniers</div>
+          <div class="news-excerpt">L'ENSMG lance une nouvelle certification professionnelle en modélisation financière des projets miniers.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENSEIGNANTS -->
+<section class="section">
+  <div class="container-ensmg">
+    <div class="section-header text-center">
+      <span class="section-eyebrow">Corps professoral</span>
+      <h2 class="section-title">Nos enseignants chercheurs</h2>
+      <p class="section-lead">Une équipe de professeurs et chercheurs reconnus nationalement et internationalement.</p>
+    </div>
+    <div class="people-grid">
+      <div class="person-card"><div class="person-avatar-placeholder">MD</div><div class="person-body"><div class="person-name">DIENE Mahamadane</div><div class="person-grade">Directeur — Professeur</div><div class="person-spec">Géologie structurale</div></div></div>
+      <div class="person-card"><div class="person-avatar-placeholder">DA</div><div class="person-body"><div class="person-name">DIONE Adama</div><div class="person-grade">Maître de Conf. titulaire</div><div class="person-spec">Géosciences</div></div></div>
+      <div class="person-card"><div class="person-avatar-placeholder">FG</div><div class="person-body"><div class="person-name">FAYE Gayane</div><div class="person-grade">Professeur assimilé</div><div class="person-spec">Géologie</div></div></div>
+      <div class="person-card"><div class="person-avatar-placeholder">FC</div><div class="person-body"><div class="person-name">FAYE Cheikh Ibrahima</div><div class="person-grade">Maître de conf. assimilé</div><div class="person-spec">Géotechnique</div></div></div>
+      <div class="person-card"><div class="person-avatar-placeholder">DM</div><div class="person-body"><div class="person-name">DIEYE Moumar</div><div class="person-grade">Maître de Conf. titulaire</div><div class="person-spec">Hydrogéologie</div></div></div>
+    </div>
+    <div class="text-center mt-4">
+      <a href="#" class="btn-blue">Voir tous les enseignants <i class="bi bi-people-fill"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-banner">
+  <div class="cta-inner">
+    <h2>Rejoignez l'ENSMG</h2>
+    <p>Candidatez dès maintenant pour intégrer nos programmes de formation et rejoindre une communauté d'ingénieurs d'excellence engagés pour l'Afrique.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a href="#" class="btn-gold"><i class="bi bi-file-earmark-person-fill"></i> Déposer ma candidature</a>
+      <a href="#" class="btn-outline-ensmg"><i class="bi bi-chat-dots-fill"></i> Nous contacter</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-about">
+      <div style="margin-bottom:1rem"><span class="school-name" style="color:white;font-family:var(--font-serif);font-weight:700;">École Nationale Supérieure<br>des Mines et de la Géologie</span><br><span class="school-acronym">ENSMG — UCAD</span></div>
+      <p>Former des ingénieurs et chercheurs de haut niveau dans les domaines des géosciences, au service du développement du Sénégal et de l'Afrique de l'Ouest.</p>
+      <div class="footer-social">
+        <a href="#"><i class="bi bi-facebook"></i></a>
+        <a href="#"><i class="bi bi-twitter-x"></i></a>
+        <a href="#"><i class="bi bi-linkedin"></i></a>
+        <a href="#"><i class="bi bi-youtube"></i></a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Navigation</div>
+      <ul class="footer-links">
+        <li><a href="#">Formations</a></li>
+        <li><a href="#">Admissions</a></li>
+        <li><a href="#">Recherches</a></li>
+        <li><a href="#">Enseignants</a></li>
+        <li><a href="#">Actualités</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Formations</div>
+      <ul class="footer-links">
+        <li><a href="#">Ingénieur Géologue</a></li>
+        <li><a href="#">Master Géotechnique</a></li>
+        <li><a href="#">Licence Pro Géotechnique</a></li>
+        <li><a href="#">Certification MOFI</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Contact</div>
+      <div class="footer-contact-item"><span class="footer-contact-icon"><i class="bi bi-geo-alt-fill"></i></span><span>Université Cheikh Anta Diop<br>BP 5005 Dakar-Fann, Sénégal</span></div>
+      <div class="footer-contact-item"><span class="footer-contact-icon"><i class="bi bi-telephone-fill"></i></span><span>+221 33 824 23 45</span></div>
+      <div class="footer-contact-item"><span class="footer-contact-icon"><i class="bi bi-envelope-fill"></i></span><span>contact@ensmg.ucad.sn</span></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <span>© 2025 ENSMG — UCAD Dakar. Tous droits réservés.</span>
+      <div class="d-flex gap-3"><a href="#">Mentions légales</a><a href="#">Plan du site</a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

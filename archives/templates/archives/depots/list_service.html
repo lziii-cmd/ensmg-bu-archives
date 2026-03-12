@@ -1,0 +1,146 @@
+{% extends "archives/base.html" %}
+{% block title %}Dépôts du service — Archives ENSMG{% endblock %}
+{% block topbar_title %}Dépôts du service{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-3" style="border-left:4px solid #5b2f8a !important">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-circle p-3 flex-shrink-0"
+           style="background:rgba(91,47,138,.1)">
+        <i class="bi bi-building fs-4" style="color:#5b2f8a"></i>
+      </div>
+      <div>
+        <h5 class="mb-1 fw-semibold">
+          Dépôts du service :
+          {% if departement %}
+            <span class="fw-bold" style="color:#5b2f8a">{{ departement.nom }}</span>
+          {% else %}
+            <span class="text-muted fst-italic">Aucun département associé à votre compte</span>
+          {% endif %}
+        </h5>
+        <p class="text-muted mb-0 small">
+          Tous les documents déposés par les agents de votre service — en attente, archivés ou rejetés.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not departement %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle me-2"></i>
+  Votre compte n'est pas rattaché à un département. Contactez l'administrateur.
+</div>
+{% else %}
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-inbox me-2 text-warning"></i>
+      Dépôts du service ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Récépissé</th>
+            <th>Titre</th>
+            <th>Déposé par</th>
+            <th>Date dépôt</th>
+            <th>Date document</th>
+            <th>Catégorie</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for depot in depots %}
+        <tr>
+          <td>
+            <code style="font-size:.75rem">{{ depot.numero_recepisse }}</code>
+          </td>
+          <td>
+            <span class="fw-semibold small">{{ depot.titre|truncatechars:45 }}</span>
+            {% if depot.mots_cles %}
+            <br>
+            <span class="text-muted" style="font-size:.7rem">
+              <i class="bi bi-tags me-1"></i>{{ depot.mots_cles|truncatechars:40 }}
+            </span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="small">
+              {{ depot.agent.get_full_name|default:depot.agent.username }}
+              {% if depot.agent == request.user %}
+              <span class="badge bg-light text-dark border" style="font-size:.62rem">Vous</span>
+              {% endif %}
+            </span>
+          </td>
+          <td><span class="small">{{ depot.date_depot|date:"d/m/Y" }}</span></td>
+          <td><span class="small">{{ depot.date_reception|date:"d/m/Y"|default:"—" }}</span></td>
+          <td>
+            <span class="small text-muted">{{ depot.categorie|default:"—" }}</span>
+          </td>
+          <td>
+            {% if depot.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif depot.statut == 'ARCHIVE' %}
+              <span class="badge bg-success">
+                <i class="bi bi-check me-1"></i>Archivé
+              </span>
+            {% else %}
+              <span class="badge bg-danger">Rejeté</span>
+            {% endif %}
+            {% if depot.statut == 'ARCHIVE' and depot.document_archive %}
+            <br>
+            <a href="{% url 'archives:document_detail' depot.document_archive.pk %}"
+               class="text-muted small">
+              <i class="bi bi-folder2-open me-1"></i>{{ depot.document_archive.identifiant }}
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+            Aucun dépôt enregistré pour votre service.
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

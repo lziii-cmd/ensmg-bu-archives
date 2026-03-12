@@ -1,0 +1,413 @@
+{% extends "archives/base.html" %}
+{% block title %}Dépôt {{ depot.numero_recepisse }} — Archives ENSMG{% endblock %}
+{% block topbar_title %}Traitement du dépôt{% endblock %}
+
+{% block extra_head %}
+<style>
+.info-grid dt { font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; color:#8a9bb0; font-weight:600; margin-bottom:2px; }
+.info-grid dd { font-size:.9rem; color:#1a2332; margin-bottom:12px; }
+.decision-card { border:2px solid #dee2e6; border-radius:12px; padding:1rem 1.2rem; cursor:pointer; transition:.15s; }
+.decision-card:hover { border-color:#adb5bd; background:#f8f9fa; }
+.decision-card.selected-archive { border-color:#198754; background:rgba(25,135,84,.06); }
+.decision-card.selected-rejete  { border-color:#dc3545; background:rgba(220,53,69,.06); }
+.status-pill { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .85rem; border-radius:50px; font-size:.78rem; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Breadcrumb ── -->
+<nav class="mb-3" aria-label="breadcrumb">
+  <ol class="breadcrumb mb-0" style="font-size:.82rem">
+    <li class="breadcrumb-item"><a href="{% url 'archives:archiviste_depots' %}" class="text-decoration-none text-muted">Dépôts</a></li>
+    <li class="breadcrumb-item active">{{ depot.numero_recepisse }}</li>
+  </ol>
+</nav>
+
+<!-- ── Hero card ── -->
+<div class="card border-0 shadow-sm mb-4" style="border-left:4px solid #1a5276 !important">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:48px;height:48px;background:rgba(26,82,118,.1)">
+          <i class="bi bi-file-earmark-arrow-down fs-4" style="color:#1a5276"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <h5 class="mb-0 fw-bold">{{ depot.titre|truncatechars:60 }}</h5>
+            {% if depot.statut == 'EN_ATTENTE' %}
+              <span class="status-pill bg-warning bg-opacity-15 text-warning-emphasis">
+                <i class="bi bi-hourglass-split"></i>En attente
+              </span>
+            {% elif depot.statut == 'ARCHIVE' %}
+              <span class="status-pill bg-success bg-opacity-15 text-success">
+                <i class="bi bi-check-circle-fill"></i>Archivé
+              </span>
+            {% else %}
+              <span class="status-pill bg-danger bg-opacity-15 text-danger">
+                <i class="bi bi-x-circle-fill"></i>Rejeté
+              </span>
+            {% endif %}
+          </div>
+          <div class="d-flex flex-wrap gap-2 align-items-center" style="font-size:.82rem">
+            <span class="text-muted"><code>{{ depot.numero_recepisse }}</code></span>
+            <span class="text-muted">•</span>
+            <span class="text-muted">
+              <i class="bi bi-person me-1"></i>
+              {{ depot.agent.get_full_name|default:depot.agent.username }}
+            </span>
+            {% if depot.agent.departement %}
+            <span class="badge bg-light text-dark border">
+              <i class="bi bi-building me-1"></i>{{ depot.agent.departement.nom }}
+            </span>
+            {% endif %}
+            <span class="text-muted">•</span>
+            <span class="text-muted">
+              <i class="bi bi-clock me-1"></i>{{ depot.date_depot|date:"d/m/Y à H:i" }}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% if depot.fichier %}
+      <a href="{{ depot.fichier.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-download me-1"></i>Télécharger le fichier
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+
+  <!-- ── Colonne gauche : infos + aperçu ── -->
+  <div class="col-lg-4">
+
+    <!-- Fiche dépôt -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold" style="font-size:.85rem">
+          <i class="bi bi-info-circle me-2 text-secondary"></i>Informations du dépôt
+        </h6>
+      </div>
+      <div class="card-body">
+        <dl class="info-grid mb-0">
+          <dt>Récépissé</dt>
+          <dd><code>{{ depot.numero_recepisse }}</code></dd>
+
+          <dt>Déposé par</dt>
+          <dd>
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                   style="width:30px;height:30px;font-size:.7rem;background:#1a5276;flex-shrink:0">
+                {{ depot.agent.first_name|first|upper|default:depot.agent.username|first|upper }}
+              </div>
+              <div>
+                <div class="fw-semibold">{{ depot.agent.get_full_name|default:depot.agent.username }}</div>
+                <div style="font-size:.72rem;color:#8a9bb0">{{ depot.agent.get_role_display }}</div>
+              </div>
+            </div>
+          </dd>
+
+          <dt>Date de dépôt</dt>
+          <dd>{{ depot.date_depot|date:"d/m/Y à H:i" }}</dd>
+
+          <dt>Date du document</dt>
+          <dd>{{ depot.date_reception|date:"d/m/Y"|default:"Non renseignée" }}</dd>
+
+          <dt>Catégorie suggérée</dt>
+          <dd>
+            {% if depot.categorie %}
+            <span class="badge bg-light text-dark border">{{ depot.categorie }}</span>
+            {% else %}<span class="text-muted fst-italic small">Non précisée</span>{% endif %}
+          </dd>
+
+          {% if depot.description %}
+          <dt>Description</dt>
+          <dd class="small">{{ depot.description }}</dd>
+          {% endif %}
+
+          {% if depot.mots_cles %}
+          <dt>Mots-clés (agent)</dt>
+          <dd>
+            <div class="d-flex flex-wrap gap-1">
+            {% for mot in depot.mots_cles.split %}
+            <span class="badge" style="background:#e8f4fd;color:#1a5276;font-size:.68rem">{{ mot }}</span>
+            {% endfor %}
+            </div>
+          </dd>
+          {% endif %}
+
+          {% if depot.traite_par %}
+          <dt>Traité par</dt>
+          <dd>{{ depot.traite_par.get_full_name|default:depot.traite_par.username }}
+            <div class="text-muted small">{{ depot.date_traitement|date:"d/m/Y à H:i" }}</div>
+          </dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Aperçu fichier -->
+    {% if depot.fichier %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-2">
+        <h6 class="mb-0 fw-semibold" style="font-size:.82rem">
+          <i class="bi bi-eye me-2 text-secondary"></i>Aperçu du fichier
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        {% with fname=depot.fichier.name|lower %}
+        {% if fname|slice:"-4:" == ".pdf" %}
+        <iframe src="{{ depot.fichier.url }}"
+                style="width:100%;height:360px;border:none;display:block"></iframe>
+        {% elif fname|slice:"-4:" == ".jpg" or fname|slice:"-4:" == ".png" or fname|slice:"-5:" == ".jpeg" %}
+        <div class="text-center p-2" style="background:#f8f9fa">
+          <img src="{{ depot.fichier.url }}" style="max-width:100%;max-height:280px;object-fit:contain">
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-file-earmark fs-1 d-block mb-2 opacity-40"></i>
+          <p class="small mb-2">Aperçu non disponible pour ce format.</p>
+          <a href="{{ depot.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir
+          </a>
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- ── Colonne droite : décision ── -->
+  <div class="col-lg-8">
+    {% if depot.statut == 'EN_ATTENTE' %}
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-pencil-square me-2" style="color:#1a5276"></i>Décision d'archivage
+        </h6>
+        <p class="text-muted mb-0 mt-1 small">Renseignez les métadonnées archivistiques avant de valider.</p>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <!-- Décision visuelle -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Décision <span class="text-danger">*</span></label>
+            <!-- Champ caché Django -->
+            <div style="display:none">{{ form.decision }}</div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <div class="decision-card" id="card-archive"
+                     onclick="setDecision('ARCHIVE')">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:36px;height:36px;background:rgba(25,135,84,.1);flex-shrink:0">
+                      <i class="bi bi-archive-fill text-success"></i>
+                    </div>
+                    <div>
+                      <div class="fw-semibold" style="font-size:.9rem">Archiver</div>
+                      <div class="text-muted" style="font-size:.72rem">Intégrer au fonds documentaire</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="decision-card" id="card-rejete"
+                     onclick="setDecision('REJETE')">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:36px;height:36px;background:rgba(220,53,69,.1);flex-shrink:0">
+                      <i class="bi bi-x-circle-fill text-danger"></i>
+                    </div>
+                    <div>
+                      <div class="fw-semibold" style="font-size:.9rem">Rejeter</div>
+                      <div class="text-muted" style="font-size:.72rem">Retourner le dépôt à l'agent</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- === BLOC ARCHIVE === -->
+          <div id="champs-archive" style="display:none">
+            <div class="p-3 mb-3 rounded-3" style="background:#f0f7ff;border-left:3px solid #1a5276">
+              <div class="small fw-semibold" style="color:#1a5276">
+                <i class="bi bi-info-circle me-1"></i>Métadonnées archivistiques obligatoires
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Plan de classement <span class="text-danger">*</span></label>
+                {{ form.plan_classement }}
+                {% if form.plan_classement.errors %}
+                <div class="text-danger small mt-1">{{ form.plan_classement.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Catégorie <span class="text-danger">*</span></label>
+                {{ form.categorie }}
+                {% if form.categorie.errors %}
+                <div class="text-danger small mt-1">{{ form.categorie.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">
+                  Service producteur
+                  {% if producteur_auto %}
+                  <span class="badge ms-1" style="background:#e8f4fd;color:#1a5276;font-size:.6rem">
+                    <i class="bi bi-check-circle me-1"></i>Auto-rempli
+                  </span>
+                  {% endif %}
+                </label>
+                {{ form.producteur }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Date du document</label>
+                {{ form.date_creation }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Confidentialité <span class="text-danger">*</span></label>
+                {{ form.confidentialite }}
+                {% if form.confidentialite.errors %}
+                <div class="text-danger small mt-1">{{ form.confidentialite.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Sort final</label>
+                {{ form.sort_final }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Support</label>
+                {{ form.support }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Statut</label>
+                {{ form.statut }}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">
+                  Mots-clés
+                  {% if depot.mots_cles %}
+                  <span class="badge bg-success-subtle text-success ms-1" style="font-size:.6rem">
+                    <i class="bi bi-check-circle me-1"></i>Fournis par l'agent
+                  </span>
+                  {% endif %}
+                </label>
+                {{ form.mots_cles }}
+                {% if depot.mots_cles %}
+                <div class="form-text text-success small">
+                  <i class="bi bi-person me-1"></i>Suggestion : <em>{{ depot.mots_cles }}</em>
+                </div>
+                {% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Localisation physique</label>
+                {{ form.localisation }}
+                <div class="form-text small">Ex : Bâtiment A, Salle 12, Étagère 3</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- === BLOC REJET === -->
+          <div id="champs-rejet" style="display:none">
+            <div class="p-3 mb-3 rounded-3" style="background:#fff5f5;border-left:3px solid #dc3545">
+              <div class="small fw-semibold text-danger">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Ce motif sera communiqué à l'agent via notification.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Motif du rejet <span class="text-danger">*</span></label>
+              {{ form.motif_rejet }}
+              {% if form.motif_rejet.errors %}
+              <div class="text-danger small mt-1">{{ form.motif_rejet.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between pt-2">
+            <a href="{% url 'archives:archiviste_depots' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i>Retour
+            </a>
+            <button type="submit" class="btn btn-primary px-4" id="btn-submit" disabled>
+              <i class="bi bi-check-lg me-1"></i>Valider la décision
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% else %}
+
+    <!-- Dépôt déjà traité -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-5 text-center">
+        {% if depot.statut == 'ARCHIVE' %}
+          <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-check-circle-fill text-success" style="font-size:2.5rem"></i>
+          </div>
+          <h5 class="fw-semibold mb-1">Dépôt archivé avec succès</h5>
+          <p class="text-muted small mb-4">Ce dépôt a été intégré au fonds d'archives.</p>
+          {% if depot.document_archive %}
+          <a href="{% url 'archives:document_detail' depot.document_archive.pk %}"
+             class="btn btn-success">
+            <i class="bi bi-folder2-open me-1"></i>Consulter le document archivé
+            <code class="ms-2 text-white opacity-75">{{ depot.document_archive.identifiant }}</code>
+          </a>
+          {% endif %}
+        {% else %}
+          <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-x-circle-fill text-danger" style="font-size:2.5rem"></i>
+          </div>
+          <h5 class="fw-semibold mb-1">Dépôt rejeté</h5>
+          {% if depot.motif_rejet %}
+          <div class="alert alert-warning text-start mt-3 mx-auto" style="max-width:480px">
+            <div class="fw-semibold mb-1"><i class="bi bi-chat-left-text me-1"></i>Motif communiqué à l'agent :</div>
+            {{ depot.motif_rejet }}
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+const selectDecision = document.getElementById('id_decision');
+const champsArchive  = document.getElementById('champs-archive');
+const champsRejet    = document.getElementById('champs-rejet');
+const btnSubmit      = document.getElementById('btn-submit');
+const cardArchive    = document.getElementById('card-archive');
+const cardRejete     = document.getElementById('card-rejete');
+
+function setDecision(val) {
+  if (selectDecision) selectDecision.value = val;
+  if (cardArchive) cardArchive.className = 'decision-card' + (val === 'ARCHIVE' ? ' selected-archive' : '');
+  if (cardRejete)  cardRejete.className  = 'decision-card' + (val === 'REJETE'  ? ' selected-rejete'  : '');
+  if (champsArchive) champsArchive.style.display = val === 'ARCHIVE' ? 'block' : 'none';
+  if (champsRejet)   champsRejet.style.display   = val === 'REJETE'  ? 'block' : 'none';
+  if (btnSubmit)     btnSubmit.disabled = false;
+}
+
+// Restaurer l'état si le form a été soumis avec erreurs
+if (selectDecision && selectDecision.value) setDecision(selectDecision.value);
+</script>
+{% endblock %}
+{% endblock %}

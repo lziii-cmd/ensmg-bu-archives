@@ -1,0 +1,24 @@
+{% extends "archives/base.html" %}
+{% block title %}Visualisation — {{ document.titre|truncatechars:40 }}{% endblock %}
+{% block topbar_title %}Visualisation PDF — {{ document.titre|truncatechars:40 }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .page-body { padding: 0.5rem; }
+  #pdf-frame { width: 100%; height: calc(100vh - 100px); border: none; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <a href="{% url 'archives:document_detail' document.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Retour à la fiche
+  </a>
+  <a href="{% url 'archives:document_telecharger' document.pk %}" class="btn btn-sm btn-success">
+    <i class="bi bi-download me-1"></i>Télécharger
+  </a>
+</div>
+<iframe id="pdf-frame"
+  src="https://mozilla.github.io/pdf.js/web/viewer.html?file={{ fichier_url|urlencode }}">
+</iframe>
+{% endblock %}

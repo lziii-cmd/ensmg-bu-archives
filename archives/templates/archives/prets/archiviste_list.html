@@ -1,0 +1,62 @@
+{% extends "archives/base.html" %}
+{% block title %}Demandes de prêt — Archives ENSMG{% endblock %}
+{% block topbar_title %}Gestion des prêts{% endblock %}
+
+{% block content %}
+<div class="mb-3 d-flex gap-2">
+  <a href="?statut=EN_ATTENTE" class="btn btn-sm {% if statut_filtre == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+    En attente
+  </a>
+  <a href="?statut=ACCORDE" class="btn btn-sm {% if statut_filtre == 'ACCORDE' %}btn-success{% else %}btn-outline-success{% endif %}">
+    Accordés
+  </a>
+  <a href="?statut=REFUSE" class="btn btn-sm {% if statut_filtre == 'REFUSE' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+    Refusés
+  </a>
+  <a href="?statut=CLOTUREE" class="btn btn-sm {% if statut_filtre == 'CLOTUREE' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+    Clôturés
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-0 py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-bookmarks-fill me-2 text-info"></i>
+      Demandes — {{ statut_filtre }} ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Document</th><th>Demandeur</th><th>Type</th><th>Date</th><th>Statut</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+        {% for demande in demandes %}
+        <tr>
+          <td>{{ demande.document.titre|truncatechars:35 }}</td>
+          <td>{{ demande.demandeur.get_full_name|default:demande.demandeur.username }}</td>
+          <td><span class="badge bg-light text-dark">{{ demande.get_type_pret_display }}</span></td>
+          <td>{{ demande.date_demande|date:"d/m/Y" }}</td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}<span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDE' %}<span class="badge bg-success">Accordé</span>
+            {% elif demande.statut == 'REFUSE' %}<span class="badge bg-danger">Refusé</span>
+            {% else %}<span class="badge bg-secondary">Clôturé</span>{% endif %}
+          </td>
+          <td>
+            <a href="{% url 'archives:archiviste_pret_detail' demande.pk %}" class="btn btn-sm btn-outline-primary">
+              {% if demande.statut == 'EN_ATTENTE' %}<i class="bi bi-pencil me-1"></i>Traiter
+              {% else %}<i class="bi bi-eye me-1"></i>Voir{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Aucune demande dans cette catégorie.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

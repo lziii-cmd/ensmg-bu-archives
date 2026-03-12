@@ -1,0 +1,109 @@
+{% extends "archives/base.html" %}
+{% block title %}Traiter demande #{{ demande.pk }} — Archives ENSMG{% endblock %}
+{% block topbar_title %}Traitement de la demande de prêt{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2 text-primary"></i>Détails de la demande</h6>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted">Document</dt>
+          <dd class="col-7 fw-semibold">
+            <a href="{% url 'archives:document_detail' demande.document.pk %}">
+              {{ demande.document.titre|truncatechars:35 }}
+            </a>
+          </dd>
+          <dt class="col-5 text-muted">Demandeur</dt>
+          <dd class="col-7">{{ demande.demandeur.get_full_name|default:demande.demandeur.username }}</dd>
+          <dt class="col-5 text-muted">Type de prêt</dt>
+          <dd class="col-7">{{ demande.get_type_pret_display }}</dd>
+          <dt class="col-5 text-muted">Date demande</dt>
+          <dd class="col-7">{{ demande.date_demande|date:"d/m/Y H:i" }}</dd>
+          {% if demande.date_retour_prevue %}
+          <dt class="col-5 text-muted">Retour prévu</dt>
+          <dd class="col-7">{{ demande.date_retour_prevue|date:"d/m/Y" }}</dd>
+          {% endif %}
+          {% if demande.duree_acces_heures %}
+          <dt class="col-5 text-muted">Durée demandée</dt>
+          <dd class="col-7">{{ demande.duree_acces_heures }}h</dd>
+          {% endif %}
+          <dt class="col-5 text-muted">Motif</dt>
+          <dd class="col-7">{{ demande.motif }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    {% if demande.statut == 'EN_ATTENTE' %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-pencil-square me-2 text-warning"></i>Décision</h6>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Décision <span class="text-danger">*</span></label>
+            {{ form.decision }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Commentaire</label>
+            {{ form.commentaire_archiviste }}
+            {% if form.commentaire_archiviste.errors %}<div class="text-danger small">{{ form.commentaire_archiviste.errors.0 }}</div>{% endif %}
+          </div>
+          {% if demande.type_pret == 'PHYSIQUE' %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Date de retour confirmée</label>
+            {{ form.date_retour_prevue }}
+          </div>
+          {% else %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Durée d'accès accordée (heures)</label>
+            {{ form.duree_acces_heures }}
+          </div>
+          {% endif %}
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:archiviste_prets' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>Valider
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-4">
+        {% if demande.statut == 'ACCORDE' %}
+        <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i>
+        <h6>Demande accordée</h6>
+        {% elif demande.statut == 'REFUSE' %}
+        <i class="bi bi-x-circle-fill text-danger fs-1 d-block mb-2"></i>
+        <h6>Demande refusée</h6>
+        {% else %}
+        <i class="bi bi-archive text-secondary fs-1 d-block mb-2"></i>
+        <h6>Demande clôturée</h6>
+        {% endif %}
+        {% if demande.commentaire_archiviste %}
+        <p class="text-muted">{{ demande.commentaire_archiviste }}</p>
+        {% endif %}
+        {% if demande.statut == 'ACCORDE' and demande.type_pret == 'PHYSIQUE' %}
+        {% with pret=demande.pretdocument_set.first %}
+        {% if pret and pret.statut == 'EN_COURS' %}
+        <a href="{% url 'archives:retour_pret' pret.pk %}" class="btn btn-warning mt-2">
+          <i class="bi bi-arrow-return-left me-1"></i>Enregistrer le retour
+        </a>
+        {% endif %}
+        {% endwith %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

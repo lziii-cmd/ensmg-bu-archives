@@ -1,0 +1,260 @@
+{% extends "archives/base.html" %}
+{% block title %}Traiter recherche #{{ demande.pk }} — Archives ENSMG{% endblock %}
+{% block topbar_title %}Traitement d'une demande de recherche{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'archives:archiviste_recherches' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+  </a>
+</div>
+
+<div class="row g-3">
+
+  <!-- Colonne gauche : demande de l'agent -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-person-circle me-2" style="color:#1a5276"></i>
+          Demande de l'agent
+        </h6>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">N° demande</dt>
+          <dd class="col-7"><code>#{{ demande.pk }}</code></dd>
+
+          <dt class="col-5 text-muted">Agent</dt>
+          <dd class="col-7 fw-semibold">
+            {{ demande.agent.get_full_name|default:demande.agent.username }}
+            <br>
+            {% if demande.agent.departement %}
+            <span class="badge bg-light text-dark border" style="font-size:.62rem">
+              <i class="bi bi-building me-1"></i>{{ demande.agent.departement.nom }}
+            </span>
+            {% endif %}
+          </dd>
+
+          <dt class="col-5 text-muted">Date demande</dt>
+          <dd class="col-7">{{ demande.date_demande|date:"d/m/Y H:i" }}</dd>
+
+          <dt class="col-5 text-muted">Catégorie</dt>
+          <dd class="col-7">{{ demande.categorie|default:"Non précisée" }}</dd>
+
+          <dt class="col-5 text-muted">Service producteur</dt>
+          <dd class="col-7">{{ demande.service_producteur.nom|default:"Non précisé" }}</dd>
+
+          <dt class="col-5 text-muted">Motif</dt>
+          <dd class="col-7">{{ demande.motif }}</dd>
+
+          <dt class="col-5 text-muted">Statut</dt>
+          <dd class="col-7">
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDEE' %}
+              <span class="badge bg-success">Accordée</span>
+            {% else %}
+              <span class="badge bg-danger">Refusée</span>
+            {% endif %}
+          </dd>
+        </dl>
+
+        <hr class="my-3">
+        <div class="p-3 bg-light rounded">
+          <div class="text-muted small fw-semibold mb-1">
+            <i class="bi bi-card-text me-1"></i>Description du document recherché :
+          </div>
+          <p class="mb-0 small">{{ demande.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    {% if demande.statut != 'EN_ATTENTE' and demande.traite_par %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Traité par</div>
+        <div class="fw-semibold">
+          {{ demande.traite_par.get_full_name|default:demande.traite_par.username }}
+        </div>
+        <div class="text-muted small">{{ demande.date_traitement|date:"d/m/Y H:i" }}</div>
+        {% if demande.statut == 'ACCORDEE' and demande.document_fourni %}
+        <hr class="my-2">
+        <div class="text-muted small mb-1">Document fourni</div>
+        <a href="{% url 'archives:document_detail' demande.document_fourni.pk %}"
+           class="btn btn-sm btn-success w-100">
+          <i class="bi bi-folder2-open me-1"></i>
+          {{ demande.document_fourni.identifiant }}
+          <br>
+          <small>{{ demande.document_fourni.titre|truncatechars:40 }}</small>
+        </a>
+        {% elif demande.statut == 'REFUSEE' %}
+        <hr class="my-2">
+        <div class="alert alert-warning small mb-0">
+          <strong>Motif :</strong> {{ demande.motif_refus }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Colonne droite : formulaire de décision ou résultat -->
+  <div class="col-lg-7">
+    {% if demande.statut == 'EN_ATTENTE' %}
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-search me-2" style="color:#1a5276"></i>Recherche et décision
+        </h6>
+        <small class="text-muted">
+          Recherchez dans les fonds. Si vous trouvez le document, sélectionnez-le et accordez le prêt numérique.
+        </small>
+      </div>
+      <div class="card-body">
+
+        <!-- Aide à la recherche -->
+        <div class="alert alert-info small mb-4 py-2">
+          <strong><i class="bi bi-lightbulb me-1"></i>Indices de recherche :</strong>
+          <ul class="mb-0 mt-1">
+            {% if demande.categorie %}
+            <li>Catégorie : <strong>{{ demande.categorie }}</strong></li>
+            {% endif %}
+            {% if demande.service_producteur %}
+            <li>Service producteur : <strong>{{ demande.service_producteur.nom }}</strong></li>
+            {% endif %}
+            <li>Description : <em>{{ demande.description|truncatechars:100 }}</em></li>
+          </ul>
+          <div class="mt-2">
+            <a href="{% url 'archives:document_list' %}?q={{ demande.description|truncatechars:50 }}"
+               target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-search me-1"></i>Rechercher dans les archives
+            </a>
+          </div>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <!-- Décision -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              Décision <span class="text-danger">*</span>
+            </label>
+            {{ form.decision }}
+          </div>
+
+          <!-- Bloc : Document trouvé -->
+          <div id="bloc-accorder" style="display:none">
+            <div class="alert alert-success small py-2 mb-3">
+              <i class="bi bi-check-circle me-1"></i>
+              Sélectionnez le document trouvé. Un prêt numérique de 24h sera accordé automatiquement.
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Document trouvé <span class="text-danger">*</span>
+              </label>
+              {{ form.document_id }}
+              {% if form.document_id.errors %}
+              <div class="text-danger small mt-1">{{ form.document_id.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">
+                Astuce : ouvrez la liste des archives dans un nouvel onglet pour trouver l'identifiant.
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloc : Refus -->
+          <div id="bloc-refuser" style="display:none">
+            <div class="alert alert-warning small py-2 mb-3">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              Le document n'a pas été trouvé dans les fonds.
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Motif du refus / document non trouvé <span class="text-danger">*</span>
+              </label>
+              {{ form.motif_refus }}
+              {% if form.motif_refus.errors %}
+              <div class="text-danger small mt-1">{{ form.motif_refus.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">Ce message sera transmis à l'agent via notification.</div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:archiviste_recherches' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i>Annuler
+            </a>
+            <button type="submit" class="btn btn-primary" id="btn-submit-recherche" disabled>
+              <i class="bi bi-check-lg me-1"></i>Valider la décision
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% else %}
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5">
+        {% if demande.statut == 'ACCORDEE' %}
+          <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-check-circle-fill text-success fs-1"></i>
+          </div>
+          <h5 class="fw-semibold">Document trouvé — Prêt accordé</h5>
+          <p class="text-muted">Un prêt numérique a été accordé à l'agent.</p>
+          {% if demande.document_fourni %}
+          <a href="{% url 'archives:document_detail' demande.document_fourni.pk %}"
+             class="btn btn-success">
+            <i class="bi bi-folder2-open me-1"></i>
+            {{ demande.document_fourni.titre|truncatechars:40 }}
+          </a>
+          {% endif %}
+        {% else %}
+          <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:80px;height:80px">
+            <i class="bi bi-x-circle-fill text-danger fs-1"></i>
+          </div>
+          <h5 class="fw-semibold">Document non trouvé — Refusée</h5>
+          {% if demande.motif_refus %}
+          <div class="alert alert-warning text-start mt-3">
+            <strong>Motif communiqué à l'agent :</strong><br>{{ demande.motif_refus }}
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const selectDecision = document.getElementById('id_decision');
+  const blocAccorder   = document.getElementById('bloc-accorder');
+  const blocRefuser    = document.getElementById('bloc-refuser');
+  const btnSubmit      = document.getElementById('btn-submit-recherche');
+
+  function toggleBlocs() {
+    const val = selectDecision ? selectDecision.value : '';
+    if (blocAccorder) blocAccorder.style.display = val === 'ACCORDER' ? 'block' : 'none';
+    if (blocRefuser)  blocRefuser.style.display  = val === 'REFUSER'  ? 'block' : 'none';
+    if (btnSubmit)    btnSubmit.disabled = !val;
+  }
+
+  if (selectDecision) {
+    selectDecision.addEventListener('change', toggleBlocs);
+    toggleBlocs();
+  }
+</script>
+{% endblock %}
+{% endblock %}

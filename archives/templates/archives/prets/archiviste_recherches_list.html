@@ -1,0 +1,149 @@
+{% extends "archives/base.html" %}
+{% block title %}Demandes de recherche — Archives ENSMG{% endblock %}
+{% block topbar_title %}Demandes de recherche documentaire{% endblock %}
+
+{% block content %}
+<!-- Filtres de statut -->
+<div class="d-flex gap-2 flex-wrap mb-3">
+  <a href="?statut=EN_ATTENTE"
+     class="btn btn-sm {% if statut_filtre == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+    <i class="bi bi-hourglass-split me-1"></i>En attente
+    {% if nb_en_attente %}<span class="badge bg-dark ms-1">{{ nb_en_attente }}</span>{% endif %}
+  </a>
+  <a href="?statut=ACCORDEE"
+     class="btn btn-sm {% if statut_filtre == 'ACCORDEE' %}btn-success{% else %}btn-outline-success{% endif %}">
+    <i class="bi bi-check-circle me-1"></i>Accordées
+  </a>
+  <a href="?statut=REFUSEE"
+     class="btn btn-sm {% if statut_filtre == 'REFUSEE' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+    <i class="bi bi-x-circle me-1"></i>Refusées
+  </a>
+  <a href="?"
+     class="btn btn-sm {% if not statut_filtre or statut_filtre not in 'EN_ATTENTE ACCORDEE REFUSEE' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+    Toutes
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-search-heart-fill me-2" style="color:#1a5276"></i>
+      Demandes de recherche ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>N°</th>
+            <th>Agent demandeur</th>
+            <th>Description</th>
+            <th>Catégorie</th>
+            <th>Service</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for demande in demandes %}
+        <tr class="clickable-row {% if demande.statut == 'EN_ATTENTE' %}table-warning bg-opacity-10{% endif %}"
+            data-href="{% url 'archives:archiviste_recherche_detail' demande.pk %}"
+            style="cursor:pointer">
+          <td><code style="font-size:.75rem">#{{ demande.pk }}</code></td>
+          <td>
+            <span class="fw-semibold small">
+              {{ demande.agent.get_full_name|default:demande.agent.username }}
+            </span>
+            {% if demande.agent.departement %}
+            <br>
+            <span class="text-muted" style="font-size:.7rem">
+              <i class="bi bi-building me-1"></i>{{ demande.agent.departement.nom }}
+            </span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="small" title="{{ demande.description }}">
+              {{ demande.description|truncatechars:55 }}
+            </span>
+          </td>
+          <td><span class="small text-muted">{{ demande.categorie|default:"—" }}</span></td>
+          <td>
+            <span class="small text-muted">
+              {{ demande.service_producteur.nom|default:"—"|truncatechars:25 }}
+            </span>
+          </td>
+          <td><span class="small">{{ demande.date_demande|date:"d/m/Y" }}</span></td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDEE' %}
+              <span class="badge bg-success">Accordée</span>
+            {% else %}
+              <span class="badge bg-danger">Refusée</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                <i class="bi bi-search me-1"></i>À traiter
+              </span>
+            {% else %}
+              <i class="bi bi-eye text-secondary"></i>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-search-heart fs-2 d-block mb-2 opacity-50"></i>
+            Aucune demande de recherche dans cette catégorie.
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ page_obj.previous_page_number }}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ page_obj.next_page_number }}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.clickable-row').forEach(function(row) {
+  row.addEventListener('click', function() {
+    window.location.href = this.dataset.href;
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

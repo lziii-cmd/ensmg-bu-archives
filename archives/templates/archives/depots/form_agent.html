@@ -1,0 +1,142 @@
+{% extends "archives/base.html" %}
+{% block title %}Déposer un document — Archives ENSMG{% endblock %}
+{% block topbar_title %}Nouveau dépôt de document{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body d-flex align-items-start gap-3 py-3">
+        <div class="rounded-circle p-3 flex-shrink-0"
+             style="background:{% if theme == 'archiviste' %}rgba(26,82,118,.1){% else %}rgba(91,47,138,.1){% endif %}">
+          <i class="bi bi-upload fs-4"
+             style="color:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}"></i>
+        </div>
+        <div>
+          <h5 class="mb-1 fw-semibold">Déposer un document aux archives</h5>
+          <p class="text-muted mb-0 small">
+            Soumettez votre document : un archiviste le recevra et procédera à son enregistrement officiel.
+            Vous recevrez une notification dès qu'il sera traité.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-file-earmark-arrow-up me-2 text-secondary"></i>Informations du dépôt
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <!-- Titre -->
+          <div class="mb-4">
+            <label for="{{ form.titre.id_for_label }}" class="form-label fw-semibold">
+              Titre du document <span class="text-danger">*</span>
+            </label>
+            {{ form.titre }}
+            {% if form.titre.errors %}
+            <div class="text-danger small mt-1">{{ form.titre.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Fichier -->
+          <div class="mb-4">
+            <label for="{{ form.fichier.id_for_label }}" class="form-label fw-semibold">
+              Fichier <span class="text-danger">*</span>
+            </label>
+            <div class="border rounded p-3 bg-light text-center" id="drop-zone">
+              {{ form.fichier }}
+              <div class="text-muted small mt-2">
+                <i class="bi bi-cloud-arrow-up me-1"></i>
+                Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 50 Mo)
+              </div>
+            </div>
+            {% if form.fichier.errors %}
+            <div class="text-danger small mt-1">{{ form.fichier.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Bloc dates -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="{{ form.date_reception.id_for_label }}" class="form-label fw-semibold">
+                Date de réception / production <span class="text-danger">*</span>
+              </label>
+              {{ form.date_reception }}
+              <div class="form-text">Date à laquelle vous avez reçu ou produit ce document.</div>
+              {% if form.date_reception.errors %}
+              <div class="text-danger small mt-1">{{ form.date_reception.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Date de dépôt aux archives</label>
+              <div class="form-control bg-light text-muted" style="cursor:not-allowed">
+                <i class="bi bi-calendar-check me-1 text-success"></i>
+                Aujourd'hui (automatique)
+              </div>
+              <div class="form-text">Enregistrée automatiquement à la soumission.</div>
+            </div>
+          </div>
+
+          <!-- Catégorie (optionnel) -->
+          <div class="mb-4">
+            <label for="{{ form.categorie.id_for_label }}" class="form-label fw-semibold">
+              Catégorie <span class="text-muted fw-normal">(facultatif)</span>
+            </label>
+            {{ form.categorie }}
+            <div class="form-text">Si vous connaissez la catégorie, précisez-la. L'archiviste pourra la corriger.</div>
+            {% if form.categorie.errors %}
+            <div class="text-danger small mt-1">{{ form.categorie.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Description (optionnel) -->
+          <div class="mb-4">
+            <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">
+              Description <span class="text-muted fw-normal">(facultatif)</span>
+            </label>
+            {{ form.description }}
+            <div class="form-text">Contexte, objet du document, toute information utile à l'archiviste.</div>
+            {% if form.description.errors %}
+            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Mots-clés (optionnel) -->
+          <div class="mb-4">
+            <label for="{{ form.mots_cles.id_for_label }}" class="form-label fw-semibold">
+              Mots-clés <span class="text-muted fw-normal">(facultatif)</span>
+            </label>
+            {{ form.mots_cles }}
+            <div class="form-text">Séparés par des virgules. Si laissé vide, l'archiviste les renseignera.</div>
+            {% if form.mots_cles.errors %}
+            <div class="text-danger small mt-1">{{ form.mots_cles.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:mes_depots' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i>Annuler
+            </a>
+            <button type="submit" class="btn text-white"
+                    style="background:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}">
+              <i class="bi bi-upload me-1"></i>Soumettre le dépôt
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

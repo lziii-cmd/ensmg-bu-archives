@@ -1,0 +1,54 @@
+{% extends "archives/base.html" %}
+{% block title %}Notifications — Archives ENSMG{% endblock %}
+{% block topbar_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-0 py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-bell me-2 text-primary"></i>
+      Toutes mes notifications ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+  <div class="list-group list-group-flush">
+    {% for notif in notifications %}
+    <div class="list-group-item {% if not notif.lue %}bg-warning bg-opacity-10 border-start border-warning border-3{% endif %} py-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="fw-semibold">{{ notif.titre }}</div>
+          <p class="mb-1 text-muted" style="font-size:.875rem;">{{ notif.message }}</p>
+          <small class="text-muted">{{ notif.date_creation|date:"d/m/Y H:i" }}</small>
+        </div>
+        {% if not notif.lue %}
+        <span class="badge bg-warning text-dark ms-3">Nouveau</span>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="list-group-item text-center text-muted py-5">
+      <i class="bi bi-bell-slash fs-3 d-block mb-2"></i>
+      Aucune notification.
+    </div>
+    {% endfor %}
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-0 py-3">
+    <nav>
+      <ul class="pagination pagination-sm justify-content-center mb-0">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

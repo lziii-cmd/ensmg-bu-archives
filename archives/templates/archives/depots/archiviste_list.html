@@ -1,0 +1,63 @@
+{% extends "archives/base.html" %}
+{% block title %}Dépôts à traiter — Archives ENSMG{% endblock %}
+{% block topbar_title %}Gestion des dépôts{% endblock %}
+
+{% block content %}
+<div class="mb-3 d-flex gap-2">
+  <a href="?statut=EN_ATTENTE" class="btn btn-sm {% if statut_filtre == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+    En attente
+  </a>
+  <a href="?statut=ARCHIVE" class="btn btn-sm {% if statut_filtre == 'ARCHIVE' %}btn-success{% else %}btn-outline-success{% endif %}">
+    Archivés
+  </a>
+  <a href="?statut=REJETE" class="btn btn-sm {% if statut_filtre == 'REJETE' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+    Rejetés
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-0 py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-inbox-fill me-2 text-warning"></i>
+      Dépôts — {{ statut_filtre|title }} ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Titre</th><th>Agent</th><th>Type</th><th>Date</th><th>Fichier</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+        {% for depot in depots %}
+        <tr>
+          <td>{{ depot.titre|truncatechars:40 }}</td>
+          <td>{{ depot.agent.get_full_name|default:depot.agent.username }}</td>
+          <td>{{ depot.type_document|default:"—" }}</td>
+          <td>{{ depot.date_depot|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if depot.fichier %}
+            <i class="bi bi-paperclip text-success"></i>
+            {% else %}
+            <i class="bi bi-x-lg text-muted"></i>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'archives:archiviste_depot_detail' depot.pk %}" class="btn btn-sm btn-outline-primary">
+              {% if depot.statut == 'EN_ATTENTE' %}
+              <i class="bi bi-pencil me-1"></i>Traiter
+              {% else %}
+              <i class="bi bi-eye me-1"></i>Voir
+              {% endif %}
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Aucun dépôt dans cette catégorie.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

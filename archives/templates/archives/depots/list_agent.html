@@ -1,0 +1,160 @@
+{% extends "archives/base.html" %}
+{% block title %}Mes dépôts — Archives ENSMG{% endblock %}
+{% block topbar_title %}Mes dépôts de documents{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="?" class="btn btn-sm {% if not request.GET.statut %}btn-outline-secondary active{% else %}btn-outline-secondary{% endif %}">
+      Tous
+    </a>
+    <a href="?statut=EN_ATTENTE" class="btn btn-sm {% if request.GET.statut == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+      <i class="bi bi-hourglass-split me-1"></i>En attente
+    </a>
+    <a href="?statut=ARCHIVE" class="btn btn-sm {% if request.GET.statut == 'ARCHIVE' %}btn-success{% else %}btn-outline-success{% endif %}">
+      <i class="bi bi-check-circle me-1"></i>Archivés
+    </a>
+    <a href="?statut=REJETE" class="btn btn-sm {% if request.GET.statut == 'REJETE' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+      <i class="bi bi-x-circle me-1"></i>Rejetés
+    </a>
+  </div>
+  <a href="{% url 'archives:nouveau_depot' %}" class="btn btn-sm text-white"
+     style="background:#5b2f8a">
+    <i class="bi bi-upload me-1"></i>Nouveau dépôt
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-inbox me-2 text-secondary"></i>Mes dépôts ({{ page_obj.paginator.count }})
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Récépissé</th>
+            <th>Titre</th>
+            <th>Date dépôt</th>
+            <th>Date document</th>
+            <th>Catégorie</th>
+            <th>Statut</th>
+            <th>Résultat / Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for depot in depots %}
+        <tr {% if depot.statut != 'REJETE' %}class="clickable-row"
+            data-href="{% if depot.statut == 'ARCHIVE' and depot.document_archive %}{% url 'archives:document_detail' depot.document_archive.pk %}{% else %}#{% endif %}"{% endif %}
+            style="cursor:{% if depot.statut == 'REJETE' %}default{% else %}pointer{% endif %}">
+          <td>
+            <code class="small">{{ depot.numero_recepisse }}</code>
+          </td>
+          <td>
+            <strong>{{ depot.titre|truncatechars:40 }}</strong>
+            {% if depot.description %}
+            <br><small class="text-muted">{{ depot.description|truncatechars:60 }}</small>
+            {% endif %}
+          </td>
+          <td>{{ depot.date_depot|date:"d/m/Y H:i" }}</td>
+          <td>{{ depot.date_reception|date:"d/m/Y"|default:"—" }}</td>
+          <td>{{ depot.categorie|default:"—" }}</td>
+          <td>
+            {% if depot.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">
+                <i class="bi bi-hourglass-split me-1"></i>En attente
+              </span>
+            {% elif depot.statut == 'ARCHIVE' %}
+              <span class="badge bg-success">
+                <i class="bi bi-check-circle me-1"></i>Archivé
+              </span>
+            {% else %}
+              <span class="badge bg-danger">
+                <i class="bi bi-x-circle me-1"></i>Rejeté
+              </span>
+            {% endif %}
+          </td>
+          <td onclick="event.stopPropagation()">
+            {% if depot.statut == 'REJETE' %}
+              <div>
+                {% if depot.motif_rejet %}
+                <div class="alert alert-danger py-1 px-2 mb-2 small">
+                  <i class="bi bi-exclamation-triangle me-1"></i>
+                  <strong>Motif :</strong> {{ depot.motif_rejet|truncatechars:80 }}
+                </div>
+                {% endif %}
+                <a href="{% url 'archives:retry_depot' depot.pk %}"
+                   class="btn btn-sm btn-warning text-dark">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Reformuler
+                </a>
+              </div>
+            {% elif depot.statut == 'ARCHIVE' and depot.document_archive %}
+              <a href="{% url 'archives:document_detail' depot.document_archive.pk %}"
+                 class="btn btn-sm btn-outline-success" title="Voir le document archivé">
+                <i class="bi bi-eye me-1"></i>Consulter
+              </a>
+            {% else %}
+              <span class="text-muted small fst-italic">En cours de traitement…</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+            Vous n'avez encore effectué aucun dépôt.
+            <br>
+            <a href="{% url 'archives:nouveau_depot' %}" class="btn btn-sm mt-2"
+               style="background:#5b2f8a;color:white">
+              <i class="bi bi-upload me-1"></i>Déposer un document
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.clickable-row').forEach(function(row) {
+  var href = row.dataset.href;
+  if (href && href !== '#') {
+    row.addEventListener('click', function() {
+      window.location.href = href;
+    });
+  }
+});
+</script>
+{% endblock %}
+{% endblock %}

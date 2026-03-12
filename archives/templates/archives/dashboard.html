@@ -1,0 +1,416 @@
+{% extends "archives/base.html" %}
+{% block title %}Tableau de bord — Archives ENSMG{% endblock %}
+{% block topbar_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+{% if est_gestionnaire %}
+<!-- ═══════════════════════════════════════════════════
+     VUE ARCHIVISTE / ADMIN
+════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle p-3" style="background:rgba(26,82,118,.1)">
+          <i class="bi bi-folder2-open fs-4" style="color:#1a5276"></i>
+        </div>
+        <div>
+          <div class="fs-2 fw-bold">{{ nb_documents }}</div>
+          <div class="text-muted small">Documents actifs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle p-3" style="background:rgba(255,193,7,.1)">
+          <i class="bi bi-inbox fs-4 text-warning"></i>
+        </div>
+        <div>
+          <div class="fs-2 fw-bold">{{ nb_depots_en_attente }}</div>
+          <div class="text-muted small">Dépôts en attente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle p-3" style="background:rgba(13,202,240,.1)">
+          <i class="bi bi-bookmarks fs-4 text-info"></i>
+        </div>
+        <div>
+          <div class="fs-2 fw-bold">{{ nb_demandes_pret }}</div>
+          <div class="text-muted small">Demandes de prêt</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle p-3" style="background:rgba(25,135,84,.1)">
+          <i class="bi bi-arrow-left-right fs-4 text-success"></i>
+        </div>
+        <div>
+          <div class="fs-2 fw-bold">{{ nb_prets_en_cours }}</div>
+          <div class="text-muted small">Prêts en cours</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Derniers dépôts -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-inbox me-2 text-warning"></i>Derniers dépôts reçus
+        </h6>
+        <a href="{% url 'archives:archiviste_depots' %}" class="btn btn-sm btn-outline-primary">Tout voir</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 small">
+            <thead class="table-light">
+              <tr><th>Document</th><th>Agent</th><th>Date</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+            {% for depot in derniers_depots %}
+            <tr>
+              <td>
+                <a href="{% url 'archives:archiviste_depot_detail' depot.pk %}" class="text-decoration-none">
+                  {{ depot.titre|truncatechars:35 }}
+                </a>
+              </td>
+              <td>{{ depot.agent.get_full_name|default:depot.agent.username }}</td>
+              <td>{{ depot.date_depot|date:"d/m/Y" }}</td>
+              <td>
+                {% if depot.statut == 'EN_ATTENTE' %}
+                  <span class="badge bg-warning text-dark">En attente</span>
+                {% elif depot.statut == 'ARCHIVE' %}
+                  <span class="badge bg-success">Archivé</span>
+                {% else %}
+                  <span class="badge bg-danger">Rejeté</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">Aucun dépôt</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prêts en cours -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-arrow-left-right me-2 text-success"></i>Prêts en cours
+        </h6>
+        <a href="{% url 'archives:archiviste_prets' %}" class="btn btn-sm btn-outline-success">Gérer</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 small">
+            <thead class="table-light">
+              <tr><th>Document</th><th>Emprunteur</th><th>Retour</th></tr>
+            </thead>
+            <tbody>
+            {% for pret in prets_en_cours %}
+            <tr>
+              <td>{{ pret.document.titre|truncatechars:25 }}</td>
+              <td>{{ pret.emprunteur.get_full_name|default:pret.emprunteur.username|truncatechars:15 }}</td>
+              <td>
+                {% if pret.date_retour_prevue %}
+                  <span class="{% if pret.est_en_retard %}text-danger fw-bold{% endif %}">
+                    {{ pret.date_retour_prevue|date:"d/m" }}
+                  </span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center text-muted py-3">Aucun prêt en cours</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- ═══════════════════════════════════════════════════
+     VUE AGENT / PERSONNEL / ENSEIGNANT / DIRECTION
+════════════════════════════════════════════════════ -->
+
+<!-- Bandeau de bienvenue -->
+<div class="card border-0 shadow-sm mb-4" style="border-left:4px solid #5b2f8a !important">
+  <div class="card-body d-flex align-items-center gap-3 py-3">
+    <div class="rounded-circle d-flex align-items-center justify-content-center"
+         style="background:rgba(91,47,138,.1);width:50px;height:50px;flex-shrink:0">
+      <i class="bi bi-person-circle fs-3" style="color:#5b2f8a"></i>
+    </div>
+    <div class="flex-grow-1">
+      <strong>Bonjour, {{ request.user.get_full_name|default:request.user.username }}</strong>
+      <span class="badge bg-light text-dark border ms-2 small">
+        {{ request.user.get_role_display|default:request.user.role }}
+      </span>
+      <br>
+      <small class="text-muted">Bienvenue dans le système d'archives de l'ENSMG.</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'archives:nouveau_depot' %}" class="btn btn-sm text-white"
+         style="background:#5b2f8a">
+        <i class="bi bi-upload me-1"></i>Déposer
+      </a>
+      <a href="{% url 'archives:document_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-search me-1"></i>Archives
+      </a>
+      <a href="{% url 'archives:nouvelle_recherche' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-search-heart me-1"></i>Recherche
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Documents publics -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white border-bottom py-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 fw-semibold">
+        <i class="bi bi-globe me-2" style="color:#5b2f8a"></i>Documents publics disponibles
+      </h6>
+      <a href="{% url 'archives:document_list' %}" class="btn btn-sm btn-outline-secondary">
+        Tout consulter
+      </a>
+    </div>
+  </div>
+
+  <!-- Barre de recherche rapide -->
+  <div class="card-body border-bottom bg-light py-2">
+    <form method="get" action="{% url 'archives:document_list' %}" class="row g-2">
+      <div class="col-md-5">
+        {{ form_recherche.q }}
+      </div>
+      <div class="col-md-3">
+        {{ form_recherche.categorie }}
+      </div>
+      <div class="col-md-2">
+        {{ form_recherche.annee }}
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm w-100 text-white" style="background:#5b2f8a">
+          <i class="bi bi-search me-1"></i>Chercher
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Grille de documents -->
+  <div class="card-body">
+    {% if docs_publics %}
+    <div class="row g-3">
+      {% for doc in docs_publics %}
+      <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border shadow-none" style="border-color:#e9ecef !important">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-start gap-2 mb-2">
+              <div class="rounded p-2 flex-shrink-0"
+                   style="background:rgba(91,47,138,.08)">
+                {% if doc.support == 'NUMERIQUE' or doc.support == 'MIXTE' %}
+                  <i class="bi bi-file-earmark-pdf" style="color:#5b2f8a"></i>
+                {% else %}
+                  <i class="bi bi-file-earmark-text" style="color:#5b2f8a"></i>
+                {% endif %}
+              </div>
+              <div class="flex-grow-1 overflow-hidden">
+                <p class="mb-0 fw-semibold small text-truncate" title="{{ doc.titre }}">
+                  {{ doc.titre|truncatechars:45 }}
+                </p>
+                <small class="text-muted">{{ doc.categorie|default:"Non classé" }}</small>
+              </div>
+            </div>
+            <div class="text-muted" style="font-size:.7rem">
+              <i class="bi bi-calendar3 me-1"></i>{{ doc.date_creation|date:"d/m/Y"|default:"—" }}
+              {% if doc.producteur %}
+              · <i class="bi bi-building me-1"></i>{{ doc.producteur|truncatechars:20 }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-footer bg-transparent border-top-0 pt-0 pb-2 px-3">
+            <a href="{% url 'archives:document_detail' doc.pk %}"
+               class="btn btn-sm w-100"
+               style="border-color:#5b2f8a;color:#5b2f8a">
+              <i class="bi bi-eye me-1"></i>Consulter
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="bi bi-folder2 fs-2 d-block mb-2 opacity-50"></i>
+      Aucun document public disponible pour le moment.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Mes dépôts + Mes prêts -->
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-inbox me-2 text-warning"></i>Mes dépôts récents
+        </h6>
+        <a href="{% url 'archives:mes_depots' %}" class="btn btn-sm btn-outline-secondary">Tous</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 small">
+            <thead class="table-light">
+              <tr><th>Titre</th><th>Date</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+            {% for depot in mes_depots %}
+            <tr>
+              <td>{{ depot.titre|truncatechars:30 }}</td>
+              <td>{{ depot.date_depot|date:"d/m/Y" }}</td>
+              <td>
+                {% if depot.statut == 'EN_ATTENTE' %}
+                  <span class="badge bg-warning text-dark">En attente</span>
+                {% elif depot.statut == 'ARCHIVE' %}
+                  <span class="badge bg-success">Archivé</span>
+                {% else %}
+                  <span class="badge bg-danger">Rejeté</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="text-center text-muted py-3">
+                Aucun dépôt.
+                <a href="{% url 'archives:nouveau_depot' %}">Déposer un document</a>
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-bookmarks me-2" style="color:#5b2f8a"></i>Mes demandes de prêt
+        </h6>
+        <a href="{% url 'archives:mes_prets' %}" class="btn btn-sm btn-outline-secondary">Toutes</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 small">
+            <thead class="table-light">
+              <tr><th>Document</th><th>Type</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+            {% for demande in mes_demandes_pret %}
+            <tr>
+              <td>
+                <a href="{% url 'archives:document_detail' demande.document.pk %}"
+                   class="text-decoration-none">
+                  {{ demande.document.titre|truncatechars:28 }}
+                </a>
+              </td>
+              <td>
+                {% if demande.type_demande == 'PHYSIQUE' %}
+                  <span class="badge bg-info text-dark">Physique</span>
+                {% else %}
+                  <span class="badge bg-primary">Numérique</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if demande.statut == 'EN_ATTENTE' %}
+                  <span class="badge bg-warning text-dark">En attente</span>
+                {% elif demande.statut == 'ACCORDEE' %}
+                  <span class="badge bg-success">Accordée</span>
+                {% elif demande.statut == 'REFUSEE' %}
+                  <span class="badge bg-danger">Refusée</span>
+                {% else %}
+                  <span class="badge bg-secondary">Clôturée</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="text-center text-muted py-3">
+                Aucune demande de prêt.<br>
+                <a href="{% url 'archives:document_list' %}" class="btn btn-sm mt-2"
+                   style="background:#5b2f8a;color:white;font-size:.75rem">
+                  <i class="bi bi-search me-1"></i>Parcourir les archives
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mes recherches documentaires -->
+{% if mes_demandes_recherche %}
+<div class="card border-0 shadow-sm mt-3">
+  <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+    <h6 class="mb-0 fw-semibold">
+      <i class="bi bi-search-heart me-2" style="color:#5b2f8a"></i>Mes recherches documentaires récentes
+    </h6>
+    <a href="{% url 'archives:mes_recherches' %}" class="btn btn-sm btn-outline-secondary">Toutes</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 small">
+        <thead class="table-light">
+          <tr><th>Description</th><th>Catégorie</th><th>Date</th><th>Statut</th></tr>
+        </thead>
+        <tbody>
+        {% for r in mes_demandes_recherche %}
+        <tr>
+          <td>{{ r.description|truncatechars:45 }}</td>
+          <td>{{ r.categorie|default:"—" }}</td>
+          <td>{{ r.date_demande|date:"d/m/Y" }}</td>
+          <td>
+            {% if r.statut == 'EN_ATTENTE' %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% elif r.statut == 'ACCORDEE' %}
+              <span class="badge bg-success">Document trouvé</span>
+            {% else %}
+              <span class="badge bg-danger">Refusée</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

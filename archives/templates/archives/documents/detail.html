@@ -1,0 +1,464 @@
+{% extends "archives/base.html" %}
+{% block title %}{{ document.titre|truncatechars:50 }} — Archives ENSMG{% endblock %}
+{% block topbar_title %}Fiche document{% endblock %}
+
+{% block extra_head %}
+<style>
+  .bloc-detail { border-left: 3px solid var(--theme-color, #1a5276); }
+  .preview-frame { width:100%; height:580px; border:none; border-radius:6px; background:#f8f9fa; }
+  .meta-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; color:#6c757d; font-weight:600; margin-bottom:2px; }
+  .meta-value { font-size:.92rem; }
+  .action-btn { min-width:135px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── En-tête ─────────────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          {% if document.confidentialite == 'PUBLIC' %}<span class="badge" style="background:#198754">Public</span>
+          {% elif document.confidentialite == 'INTERNE' %}<span class="badge bg-primary">Interne</span>
+          {% elif document.confidentialite == 'CONFIDENTIEL' %}<span class="badge" style="background:#fd7e14">Confidentiel</span>
+          {% else %}<span class="badge bg-danger">Secret</span>{% endif %}
+          <span class="badge bg-light text-dark border">{{ document.get_statut_display }}</span>
+        </div>
+        <h4 class="fw-bold mb-1">{{ document.titre }}</h4>
+        <code class="text-muted" style="font-size:.78rem">{{ document.identifiant }}</code>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if document.fichier %}
+        <button class="btn btn-outline-secondary action-btn" type="button"
+                data-bs-toggle="collapse" data-bs-target="#preview-section">
+          <i class="bi bi-eye-slash me-1"></i>Masquer
+        </button>
+        {% endif %}
+        {% if peut_telecharger %}
+        <a href="{% url 'archives:document_telecharger' document.pk %}"
+           class="btn action-btn text-white"
+           style="background:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}">
+          <i class="bi bi-download me-1"></i>Télécharger
+        </a>
+        {% endif %}
+        {% if peut_demander_pret %}
+        <a href="{% url 'archives:nouvelle_demande_pret' document.pk %}"
+           class="btn btn-outline-primary action-btn">
+          <i class="bi bi-bookmark-plus me-1"></i>Demander prêt
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Prévisualisation (ouverte par défaut) ──────────────────── -->
+{% if document.fichier %}
+{% with fname=document.fichier.name|lower %}
+<div class="collapse show mb-3" id="preview-section">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-2">
+      <h6 class="mb-0 fw-semibold"><i class="bi bi-eye me-2 text-secondary"></i>Prévisualisation</h6>
+      <div class="d-flex gap-2 align-items-center">
+        <a href="{{ document.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Nouvel onglet
+        </a>
+        <button type="button" class="btn-close"
+                data-bs-toggle="collapse" data-bs-target="#preview-section"
+                title="Masquer"></button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+
+      {# PDF → iframe directe, pleine largeur #}
+      {% if fname|slice:"-4:" == ".pdf" %}
+      <iframe src="{{ document.fichier.url }}"
+              style="width:100%;height:700px;border:none;display:block"
+              allowfullscreen>
+        <p class="p-3 text-muted">
+          Votre navigateur ne supporte pas l'affichage des PDF intégrés.
+          <a href="{{ document.fichier.url }}" target="_blank">Ouvrir dans un nouvel onglet</a>
+        </p>
+      </iframe>
+
+      {# Images → affichage direct centré #}
+      {% elif fname|slice:"-4:" == ".jpg" or fname|slice:"-4:" == ".png" or fname|slice:"-5:" == ".jpeg" or fname|slice:"-4:" == ".gif" or fname|slice:"-5:" == ".webp" %}
+      <div class="text-center p-3" style="background:#f8f9fa">
+        <img src="{{ document.fichier.url }}" alt="{{ document.titre }}"
+             style="max-width:100%;max-height:680px;object-fit:contain;border-radius:4px">
+      </div>
+
+      {# Autres formats (DOCX, XLS…) → message + lien #}
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-file-earmark-text fs-1 d-block mb-3 opacity-40"></i>
+        <p class="mb-1 fw-semibold">Ce format ne peut pas être prévisualisé dans le navigateur.</p>
+        <p class="text-muted small mb-3">Utilisez le bouton ci-dessous pour ouvrir ou télécharger le fichier.</p>
+        <a href="{{ document.fichier.url }}" target="_blank" class="btn btn-outline-primary me-2">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans un nouvel onglet
+        </a>
+        {% if peut_telecharger %}
+        <a href="{% url 'archives:document_telecharger' document.pk %}" class="btn btn-outline-secondary">
+          <i class="bi bi-download me-1"></i>Télécharger
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endif %}
+
+<!-- ── Corps ──────────────────────────────────────────────────── -->
+<div class="row g-3">
+
+  <!-- COLONNE PRINCIPALE -->
+  <div class="col-lg-8">
+
+    <!-- Bloc 1 : Identité -->
+    <div class="card border-0 shadow-sm mb-3 bloc-detail">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-file-earmark-text me-2" style="color:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}"></i>
+          Identité du document
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <div class="meta-label">Identifiant</div>
+            <div class="meta-value"><code>{{ document.identifiant }}</code></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Catégorie</div>
+            <div class="meta-value fw-semibold">{{ document.categorie|default:"—" }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Service producteur</div>
+            <div class="meta-value">{{ document.producteur|default:"—" }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Date du document</div>
+            <div class="meta-value">{{ document.date_creation|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Date de réception</div>
+            <div class="meta-value">{{ document.date_reception|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Enregistrement système</div>
+            <div class="meta-value">{{ document.date_enregistrement|date:"d/m/Y H:i"|default:"—" }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Archivé par</div>
+            <div class="meta-value">
+              {{ document.cree_par.get_full_name|default:document.cree_par.username|default:"—" }}
+            </div>
+          </div>
+          {% if document.langue %}
+          <div class="col-sm-6">
+            <div class="meta-label">Langue</div>
+            <div class="meta-value">{{ document.langue }}</div>
+          </div>
+          {% endif %}
+          {% if document.mots_cles %}
+          <div class="col-12">
+            <div class="meta-label">Mots-clés</div>
+            <div class="meta-value mt-1">
+              {% for mot in document.mots_cles.split %}
+              <span class="badge bg-light text-dark border me-1 mb-1">{{ mot }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if document.description %}
+          <div class="col-12">
+            <div class="meta-label">Description</div>
+            <div class="meta-value text-muted">{{ document.description }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloc 2 : Classification & Statut -->
+    <div class="card border-0 shadow-sm mb-3 bloc-detail">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-diagram-3 me-2" style="color:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}"></i>
+          Classification & Gestion
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% if document.plan_classement %}
+          <div class="col-sm-6">
+            <div class="meta-label">Plan de classement</div>
+            <div class="meta-value fw-semibold">{{ document.plan_classement }}</div>
+          </div>
+          {% endif %}
+          <div class="col-sm-6">
+            <div class="meta-label">Confidentialité</div>
+            <div class="meta-value">
+              {% if document.confidentialite == 'PUBLIC' %}<span class="badge" style="background:#198754">Public</span>
+              {% elif document.confidentialite == 'INTERNE' %}<span class="badge bg-primary">Interne</span>
+              {% elif document.confidentialite == 'CONFIDENTIEL' %}<span class="badge" style="background:#fd7e14">Confidentiel</span>
+              {% else %}<span class="badge bg-danger">Secret</span>{% endif %}
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Statut</div>
+            <div class="meta-value"><span class="badge bg-secondary">{{ document.get_statut_display }}</span></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="meta-label">Support</div>
+            <div class="meta-value">{{ document.get_support_display|default:"—" }}</div>
+          </div>
+          {% if document.localisation_physique %}
+          <div class="col-12">
+            <div class="meta-label">Localisation physique</div>
+            <div class="meta-value">
+              <i class="bi bi-geo-alt me-1 text-muted"></i>{{ document.localisation_physique }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloc 3 : Fichier numérique -->
+    {% if document.fichier %}
+    <div class="card border-0 shadow-sm mb-3 bloc-detail">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-file-earmark-arrow-down me-2" style="color:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}"></i>
+          Fichier numérique
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+          <div class="rounded p-3 bg-light flex-shrink-0">
+            <i class="bi bi-file-earmark fs-1 text-secondary"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="meta-label">Nom du fichier</div>
+            <div class="meta-value fw-semibold">
+              {{ document.nom_fichier_original|default:document.fichier.name }}
+            </div>
+            {% if document.taille_fichier %}
+            <div class="text-muted small mt-1">
+              <i class="bi bi-hdd me-1"></i>{{ document.taille_fichier|filesizeformat }}
+            </div>
+            {% endif %}
+            {% if document.empreinte_sha256 %}
+            <div class="mt-2">
+              <div class="meta-label">Empreinte SHA-256</div>
+              <code style="font-size:.68rem;word-break:break-all;color:#6c757d;">
+                {{ document.empreinte_sha256 }}
+              </code>
+            </div>
+            {% endif %}
+          </div>
+          <div class="d-flex flex-column gap-2 flex-shrink-0">
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+                    data-bs-toggle="collapse" data-bs-target="#preview-section">
+              <i class="bi bi-eye me-1"></i>Prévisualiser
+            </button>
+            {% if peut_telecharger %}
+            <a href="{% url 'archives:document_telecharger' document.pk %}"
+               class="btn btn-sm text-white"
+               style="background:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}">
+              <i class="bi bi-download me-1"></i>Télécharger
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Bloc 4 : Journal des mouvements (archiviste / admin uniquement) -->
+    {% if est_gestionnaire %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-clock-history me-2" style="color:#1a5276"></i>Journal des mouvements
+          <span class="badge bg-light text-dark border ms-2" style="font-size:.65rem">Archivistes uniquement</span>
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr><th>Date</th><th>Action</th><th>Utilisateur</th><th>Commentaire</th></tr>
+            </thead>
+            <tbody>
+            {% for mv in mouvements %}
+            <tr>
+              <td style="font-size:.8rem;white-space:nowrap">{{ mv.date_action|date:"d/m/Y H:i" }}</td>
+              <td><span class="badge bg-secondary" style="font-size:.7rem">{{ mv.get_action_display }}</span></td>
+              <td style="font-size:.8rem">{{ mv.utilisateur.get_full_name|default:mv.utilisateur.username }}</td>
+              <td style="font-size:.8rem" class="text-muted">{{ mv.commentaire|truncatechars:60 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">Aucun mouvement enregistré.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- COLONNE LATÉRALE -->
+  <div class="col-lg-4">
+
+    <!-- Bloc : Cycle de vie -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-hourglass-split me-2 text-info"></i>Cycle de vie (DUA)
+        </h6>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          {% if document.tableau_gestion %}
+          <dt class="col-6 text-muted">Tableau de gestion</dt>
+          <dd class="col-6 fw-semibold">{{ document.tableau_gestion.intitule|truncatechars:25 }}</dd>
+          <dt class="col-6 text-muted">DUA totale</dt>
+          <dd class="col-6">{{ document.tableau_gestion.duree_totale }} ans</dd>
+          {% endif %}
+          <dt class="col-6 text-muted">Sort final</dt>
+          <dd class="col-6">
+            {% if document.sort_final == 'CONSERVATION' %}<span class="badge bg-success">Conservation</span>
+            {% elif document.sort_final == 'ELIMINATION' %}<span class="badge bg-danger">Élimination</span>
+            {% elif document.sort_final == 'TRI' %}<span class="badge bg-warning text-dark">Tri</span>
+            {% else %}<span class="text-muted">{{ document.get_sort_final_display|default:"—" }}</span>{% endif %}
+          </dd>
+          {% if document.date_fin_dua %}
+          <dt class="col-6 text-muted">Échéance DUA</dt>
+          <dd class="col-6">
+            <span class="{% if document.est_en_fin_de_dua %}text-danger fw-bold{% else %}text-success{% endif %}">
+              {{ document.date_fin_dua|date:"d/m/Y" }}
+              {% if document.est_en_fin_de_dua %}<i class="bi bi-exclamation-triangle ms-1"></i>{% endif %}
+            </span>
+          </dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Rétentions juridiques -->
+    {% if retentions %}
+    <div class="card border-0 shadow-sm mb-3" style="border-left:3px solid #dc3545 !important">
+      <div class="card-header py-2" style="background:#dc3545">
+        <h6 class="mb-0 fw-semibold text-white">
+          <i class="bi bi-shield-lock me-2"></i>Rétention juridique active
+        </h6>
+      </div>
+      <div class="card-body small">
+        {% for ret in retentions %}
+        <div class="{% if not forloop.last %}mb-2 pb-2 border-bottom{% endif %}">
+          <strong>{{ ret.motif|truncatechars:60 }}</strong>
+          <div class="text-muted mt-1">
+            <i class="bi bi-person me-1"></i>{{ ret.autorite }}
+            {% if ret.date_fin %}· <i class="bi bi-calendar3 me-1"></i>jusqu'au {{ ret.date_fin|date:"d/m/Y" }}
+            {% else %}· <i class="bi bi-infinity me-1"></i>Indéfinie{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Accès ABAC (archiviste) -->
+    {% if peut_accorder_acces %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-key me-2 text-warning"></i>Accès ABAC</h6>
+        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="collapse" data-bs-target="#formAcces">
+          <i class="bi bi-plus"></i>Accorder
+        </button>
+      </div>
+      <div class="collapse" id="formAcces">
+        <div class="card-body border-bottom">
+          <form method="post" action="{% url 'archives:accorder_acces' document.pk %}">
+            {% csrf_token %}
+            {% for field in form_acces %}
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="text-danger small">{{ field.errors.0 }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-warning btn-sm w-100">
+              <i class="bi bi-check-lg me-1"></i>Accorder
+            </button>
+          </form>
+        </div>
+      </div>
+      {% if acces_abac %}
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light"><tr><th>Utilisateur</th><th>Expire</th><th>Actif</th></tr></thead>
+          <tbody>
+          {% for a in acces_abac %}
+          <tr>
+            <td style="font-size:.8rem">{{ a.utilisateur.get_full_name|default:a.utilisateur.username }}</td>
+            <td style="font-size:.8rem">{{ a.date_fin|date:"d/m/Y"|default:"Permanent" }}</td>
+            <td>{% if a.actif %}<span class="badge bg-success">Oui</span>{% else %}<span class="badge bg-secondary">Non</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Demande de prêt -->
+    {% if peut_demander_pret %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-3">
+        <i class="bi bi-bookmark-plus fs-2 mb-2 d-block"
+           style="color:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}"></i>
+        <p class="text-muted small mb-3">Demandez l'accès à ce document via un prêt physique ou numérique.</p>
+        <a href="{% url 'archives:nouvelle_demande_pret' document.pk %}"
+           class="btn w-100 text-white"
+           style="background:{% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %}">
+          <i class="bi bi-bookmark-plus me-1"></i>Faire une demande
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Mettre à jour le libellé du bouton "Prévisualiser" selon l'état
+(function () {
+  var section = document.getElementById('preview-section');
+  var toggleBtn = document.querySelector('[data-bs-target="#preview-section"].action-btn');
+  if (!section || !toggleBtn) return;
+  section.addEventListener('hidden.bs.collapse', function () {
+    toggleBtn.innerHTML = '<i class="bi bi-eye me-1"></i>Afficher';
+  });
+  section.addEventListener('shown.bs.collapse', function () {
+    toggleBtn.innerHTML = '<i class="bi bi-eye-slash me-1"></i>Masquer';
+  });
+  // État initial : section ouverte
+  if (section.classList.contains('show')) {
+    toggleBtn.innerHTML = '<i class="bi bi-eye-slash me-1"></i>Masquer';
+  }
+})();
+</script>
+{% endblock %}
+{% endblock %}

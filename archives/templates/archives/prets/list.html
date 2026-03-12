@@ -1,0 +1,44 @@
+{% extends "archives/base.html" %}
+{% block title %}Mes prêts — Archives ENSMG{% endblock %}
+{% block topbar_title %}Mes demandes de prêt{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-0 py-3">
+    <h6 class="mb-0 fw-semibold"><i class="bi bi-bookmarks me-2 text-info"></i>Mes demandes ({{ page_obj.paginator.count }})</h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Document</th><th>Type</th><th>Date demande</th><th>Statut</th><th>Commentaire</th></tr>
+        </thead>
+        <tbody>
+        {% for demande in demandes %}
+        <tr>
+          <td>
+            <a href="{% url 'archives:document_detail' demande.document.pk %}">
+              {{ demande.document.titre|truncatechars:40 }}
+            </a>
+          </td>
+          <td>{{ demande.get_type_pret_display }}</td>
+          <td>{{ demande.date_demande|date:"d/m/Y" }}</td>
+          <td>
+            {% if demande.statut == 'EN_ATTENTE' %}<span class="badge bg-warning text-dark">En attente</span>
+            {% elif demande.statut == 'ACCORDE' %}<span class="badge bg-success">Accordé</span>
+            {% elif demande.statut == 'REFUSE' %}<span class="badge bg-danger">Refusé</span>
+            {% else %}<span class="badge bg-secondary">Clôturé</span>{% endif %}
+          </td>
+          <td class="text-muted small">{{ demande.commentaire_archiviste|default:"—"|truncatechars:50 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">
+          <i class="bi bi-bookmarks fs-3 d-block mb-2"></i>Aucune demande de prêt.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

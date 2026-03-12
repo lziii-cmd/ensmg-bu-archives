@@ -1,0 +1,142 @@
+{% extends "archives/base.html" %}
+{% block title %}Traiter dépôt #{{ depot.pk }} — Archives ENSMG{% endblock %}
+{% block topbar_title %}Traitement du dépôt{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Informations du dépôt</h6>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted">Titre</dt>
+          <dd class="col-7 fw-semibold">{{ depot.titre }}</dd>
+          <dt class="col-5 text-muted">Agent</dt>
+          <dd class="col-7">{{ depot.agent.get_full_name|default:depot.agent.username }}</dd>
+          <dt class="col-5 text-muted">Type</dt>
+          <dd class="col-7">{{ depot.type_document|default:"—" }}</dd>
+          <dt class="col-5 text-muted">Date dépôt</dt>
+          <dd class="col-7">{{ depot.date_depot|date:"d/m/Y H:i" }}</dd>
+          <dt class="col-5 text-muted">Producteur</dt>
+          <dd class="col-7">{{ depot.producteur|default:"—" }}</dd>
+          <dt class="col-5 text-muted">Date doc</dt>
+          <dd class="col-7">{{ depot.date_document|date:"d/m/Y"|default:"—" }}</dd>
+          <dt class="col-5 text-muted">Fichier</dt>
+          <dd class="col-7">
+            {% if depot.fichier %}<i class="bi bi-paperclip text-success me-1"></i>{{ depot.fichier.name|slice:"30:" }}
+            {% else %}<span class="text-muted">Aucun fichier</span>{% endif %}
+          </dd>
+          {% if depot.description %}
+          <dt class="col-5 text-muted">Description</dt>
+          <dd class="col-7">{{ depot.description }}</dd>
+          {% endif %}
+          {% if depot.motif_depot %}
+          <dt class="col-5 text-muted">Motif</dt>
+          <dd class="col-7">{{ depot.motif_depot }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    {% if depot.statut == 'EN_ATTENTE' %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-pencil-square me-2 text-warning"></i>Décision d'archivage</h6>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Décision <span class="text-danger">*</span></label>
+            {{ form.decision }}
+          </div>
+
+          <!-- Champs pour ARCHIVE -->
+          <div id="champs-archive">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Plan de classement</label>
+              {{ form.plan_classement }}
+              {% if form.plan_classement.errors %}<div class="text-danger small">{{ form.plan_classement.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Cote</label>
+                {{ form.cote }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Confidentialité</label>
+                {{ form.confidentialite }}
+                {% if form.confidentialite.errors %}<div class="text-danger small">{{ form.confidentialite.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">DUA (années)</label>
+                {{ form.dua }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Sort final</label>
+                {{ form.sort_final }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Champs pour REJETE -->
+          <div id="champs-rejet" style="display:none;">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Motif de rejet <span class="text-danger">*</span></label>
+              {{ form.motif_rejet }}
+              {% if form.motif_rejet.errors %}<div class="text-danger small">{{ form.motif_rejet.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-3">
+            <a href="{% url 'archives:archiviste_depots' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>Valider la décision
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-4">
+        {% if depot.statut == 'ARCHIVE' %}
+        <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i>
+        <h6>Ce dépôt a été archivé.</h6>
+        {% if depot.document_cree %}
+        <a href="{% url 'archives:document_detail' depot.document_cree.pk %}" class="btn btn-success mt-2">
+          Voir le document archivé
+        </a>
+        {% endif %}
+        {% else %}
+        <i class="bi bi-x-circle-fill text-danger fs-1 d-block mb-2"></i>
+        <h6>Ce dépôt a été rejeté.</h6>
+        <p class="text-muted small">{{ depot.commentaire_archiviste }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const selectDecision = document.querySelector('[name="decision"]');
+  const champsArchive = document.getElementById('champs-archive');
+  const champsRejet = document.getElementById('champs-rejet');
+
+  function toggleChamps() {
+    const val = selectDecision.value;
+    champsArchive.style.display = val === 'ARCHIVE' ? 'block' : 'none';
+    champsRejet.style.display = val === 'REJETE' ? 'block' : 'none';
+    if (!val) { champsArchive.style.display = 'none'; }
+  }
+  selectDecision.addEventListener('change', toggleChamps);
+  toggleChamps();
+</script>
+{% endblock %}
+{% endblock %}
