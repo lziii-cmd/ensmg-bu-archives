@@ -21,11 +21,13 @@ from archives.forms import (
     DemandePretForm, TraiterDemandePretForm,
     RetourPretForm, AccesDocumentForm, RechercheDocumentForm,
     DemandeRechercheForm, TraiterRechercheForm,
+    CategorieDocumentForm, PlanClassementForm, ProvenanceExterneForm,
 )
 from archives.models import (
     Document, DepotDocument, DemandePret, PretDocument,
     AccesDocument, Notification, MouvementDocument,
     RetentionJuridique, PlanClassement, CategorieDocument, DemandeRecherche,
+    ProvenanceExterne,
 )
 from archives.permissions import (
     peut_voir_document, peut_deposer, peut_traiter_depot,
@@ -238,9 +240,29 @@ def document_viewer(request, pk):
     if not doc.fichier:
         raise Http404("Aucun fichier numerique associe.")
     return render(request, 'archives/documents/viewer.html', {
-        'document': doc, 'fichier_url': doc.fichier.url,
+        'document': doc,
         **_notif_ctx(request),
     })
+
+
+def document_serve(request, pk):
+    """Sert le fichier PDF en mode inline pour l'affichage navigateur natif."""
+    if not request.user.is_authenticated:
+        from django.conf import settings as djsettings
+        return redirect(f"{djsettings.LOGIN_URL}?next={request.path}")
+    doc = get_object_or_404(Document, pk=pk)
+    if not peut_voir_document(request.user, doc):
+        raise PermissionDenied
+    if not doc.fichier:
+        raise Http404("Aucun fichier numerique associe.")
+    try:
+        filename = doc.fichier.name.split('/')[-1]
+        response = FileResponse(doc.fichier.open('rb'), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        return response
+    except FileNotFoundError:
+        raise Http404("Le fichier est introuvable sur le serveur.")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -274,6 +296,12 @@ class NouveauDepotView(ArchiveMixin, View):
         cat_id = form.cleaned_data.get('categorie')
         categorie = CategorieDocument.objects.filter(pk=cat_id).first() if cat_id else None
 
+        prov_interne = form.cleaned_data.get('provenance_interne', True)
+        prov_ext_pk  = form.cleaned_data.get('provenance_externe')
+        prov_ext_obj = None
+        if not prov_interne and prov_ext_pk:
+            prov_ext_obj = ProvenanceExterne.objects.filter(pk=prov_ext_pk, actif=True).first()
+
         depot = DepotDocument.objects.create(
             agent=request.user,
             titre=form.cleaned_data['titre'],
@@ -283,6 +311,8 @@ class NouveauDepotView(ArchiveMixin, View):
             description=form.cleaned_data.get('description', ''),
             mots_cles=form.cleaned_data.get('mots_cles', ''),
             statut='EN_ATTENTE',
+            provenance_interne=bool(prov_interne),
+            provenance_externe=prov_ext_obj,
         )
         for arch in User.objects.filter(role='ARCHIVISTE', is_active=True):
             Notification.objects.create(
@@ -1121,3 +1151,309 @@ class RetryDepotView(ArchiveMixin, View):
             f"Votre dépôt reformulé a été soumis (récépissé : {depot.numero_recepisse})."
         )
         return redirect('archives:mes_depots')
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Mixin d'administration — réservé aux archivistes et admins
+# ──────────────────────────────────────────────────────────────────────────────
+
+class AdminMixin(ArchiveMixin):
+    """Mixin qui contrôle l'accès aux pages d'administration métier."""
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            from django.conf import settings as djsettings
+            return redirect(djsettings.LOGIN_URL)
+        if not (est_archiviste(request.user) or est_admin(request.user)):
+            raise PermissionDenied
+        return super(ArchiveMixin, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = _notif_ctx(self.request)
+        ctx.update(kwargs)
+        return ctx
+
+
+def _admin_guard(request):
+    """Vérification pour les vues FBV admin."""
+    if not request.user.is_authenticated:
+        from django.conf import settings as djsettings
+        return redirect(djsettings.LOGIN_URL)
+    if not (est_archiviste(request.user) or est_admin(request.user)):
+        raise PermissionDenied
+    return None
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Admin — Catégories de documents
+# ──────────────────────────────────────────────────────────────────────────────
+
+def admin_categories_list(request):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    categories = CategorieDocument.objects.annotate(
+        nb_documents=__import__('django.db.models', fromlist=['Count']).Count('document')
+    ).order_by('code')
+    ctx = _notif_ctx(request)
+    ctx['categories'] = categories
+    return render(request, 'archives/admin/categories/list.html', ctx)
+
+
+def admin_categorie_create(request):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    if request.method == 'POST':
+        form = CategorieDocumentForm(request.POST)
+        if form.is_valid():
+            from django.db import IntegrityError
+            try:
+                cat = CategorieDocument.objects.create(
+                    code=form.cleaned_data['code'],
+                    nom=form.cleaned_data['nom'],
+                    description=form.cleaned_data.get('description', ''),
+                )
+                messages.success(request, f"Catégorie [{cat.code}] créée avec succès.")
+                return redirect('archives:admin_categories')
+            except IntegrityError:
+                form.add_error('code', "Ce code existe déjà.")
+    else:
+        form = CategorieDocumentForm()
+    ctx = _notif_ctx(request)
+    ctx.update({'form': form, 'action': 'Créer', 'titre_page': 'Nouvelle catégorie'})
+    return render(request, 'archives/admin/categories/form.html', ctx)
+
+
+def admin_categorie_edit(request, pk):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    cat = get_object_or_404(CategorieDocument, pk=pk)
+    if request.method == 'POST':
+        form = CategorieDocumentForm(request.POST)
+        if form.is_valid():
+            from django.db import IntegrityError
+            try:
+                cat.code        = form.cleaned_data['code']
+                cat.nom         = form.cleaned_data['nom']
+                cat.description = form.cleaned_data.get('description', '')
+                cat.save()
+                messages.success(request, "Catégorie modifiée.")
+                return redirect('archives:admin_categories')
+            except IntegrityError:
+                form.add_error('code', "Ce code existe déjà.")
+    else:
+        form = CategorieDocumentForm(initial={
+            'code': cat.code, 'nom': cat.nom, 'description': cat.description
+        })
+    ctx = _notif_ctx(request)
+    ctx.update({'form': form, 'objet': cat, 'action': 'Modifier', 'titre_page': f'Modifier [{cat.code}]'})
+    return render(request, 'archives/admin/categories/form.html', ctx)
+
+
+def admin_categorie_delete(request, pk):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    cat = get_object_or_404(CategorieDocument, pk=pk)
+    nb_docs = Document.objects.filter(categorie=cat).count()
+    if request.method == 'POST':
+        if nb_docs > 0:
+            messages.error(request, f"Impossible : {nb_docs} document(s) utilisent cette catégorie.")
+            return redirect('archives:admin_categories')
+        nom = str(cat)
+        cat.delete()
+        messages.success(request, f"Catégorie «{nom}» supprimée.")
+        return redirect('archives:admin_categories')
+    ctx = _notif_ctx(request)
+    ctx.update({'objet': cat, 'nb_docs': nb_docs, 'titre_page': 'Supprimer la catégorie'})
+    return render(request, 'archives/admin/categories/confirm_delete.html', ctx)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Admin — Plan de classement
+# ──────────────────────────────────────────────────────────────────────────────
+
+def admin_plans_list(request):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    plans = PlanClassement.objects.select_related('parent', 'categorie').order_by('code')
+    ctx = _notif_ctx(request)
+    ctx['plans'] = plans
+    return render(request, 'archives/admin/plans/list.html', ctx)
+
+
+def admin_plan_create(request):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    if request.method == 'POST':
+        form = PlanClassementForm(request.POST)
+        if form.is_valid():
+            from django.db import IntegrityError
+            try:
+                parent_pk = form.cleaned_data.get('parent')
+                cat_pk    = form.cleaned_data.get('categorie')
+                plan = PlanClassement.objects.create(
+                    code=form.cleaned_data['code'],
+                    intitule=form.cleaned_data['intitule'],
+                    niveau=form.cleaned_data['niveau'],
+                    parent_id=parent_pk or None,
+                    categorie_id=cat_pk or None,
+                    description=form.cleaned_data.get('description', ''),
+                    actif=form.cleaned_data.get('actif', True),
+                )
+                messages.success(request, f"Plan de classement «{plan.code}» créé.")
+                return redirect('archives:admin_plans')
+            except IntegrityError:
+                form.add_error('code', "Cette cote existe déjà.")
+    else:
+        form = PlanClassementForm()
+    ctx = _notif_ctx(request)
+    ctx.update({'form': form, 'action': 'Créer', 'titre_page': 'Nouveau plan de classement'})
+    return render(request, 'archives/admin/plans/form.html', ctx)
+
+
+def admin_plan_edit(request, pk):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    plan = get_object_or_404(PlanClassement, pk=pk)
+    if request.method == 'POST':
+        form = PlanClassementForm(request.POST)
+        if form.is_valid():
+            from django.db import IntegrityError
+            try:
+                parent_pk = form.cleaned_data.get('parent')
+                cat_pk    = form.cleaned_data.get('categorie')
+                plan.code        = form.cleaned_data['code']
+                plan.intitule    = form.cleaned_data['intitule']
+                plan.niveau      = form.cleaned_data['niveau']
+                plan.parent_id   = parent_pk or None
+                plan.categorie_id = cat_pk or None
+                plan.description = form.cleaned_data.get('description', '')
+                plan.actif       = form.cleaned_data.get('actif', True)
+                plan.save()
+                messages.success(request, "Plan de classement modifié.")
+                return redirect('archives:admin_plans')
+            except IntegrityError:
+                form.add_error('code', "Cette cote existe déjà.")
+    else:
+        form = PlanClassementForm(initial={
+            'code': plan.code, 'intitule': plan.intitule, 'niveau': plan.niveau,
+            'parent': plan.parent_id, 'categorie': plan.categorie_id,
+            'description': plan.description, 'actif': plan.actif,
+        })
+    ctx = _notif_ctx(request)
+    ctx.update({'form': form, 'objet': plan, 'action': 'Modifier', 'titre_page': f'Modifier {plan.code}'})
+    return render(request, 'archives/admin/plans/form.html', ctx)
+
+
+def admin_plan_delete(request, pk):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+    plan = get_object_or_404(PlanClassement, pk=pk)
+    nb_docs = Document.objects.filter(plan_classement=plan).count()
+    nb_enfants = PlanClassement.objects.filter(parent=plan).count()
+    if request.method == 'POST':
+        if nb_docs > 0 or nb_enfants > 0:
+            messages.error(request, f"Impossible : {nb_docs} document(s) et {nb_enfants} sous-rubrique(s) liés.")
+            return redirect('archives:admin_plans')
+        nom = str(plan)
+        plan.delete()
+        messages.success(request, f"Plan «{nom}» supprimé.")
+        return redirect('archives:admin_plans')
+    ctx = _notif_ctx(request)
+    ctx.update({'objet': plan, 'nb_docs': nb_docs, 'nb_enfants': nb_enfants, 'titre_page': 'Supprimer le plan'})
+    return render(request, 'archives/admin/plans/confirm_delete.html', ctx)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Admin — Journal d'audit
+# ──────────────────────────────────────────────────────────────────────────────
+
+def admin_journal(request):
+    guard = _admin_guard(request)
+    if guard:
+        return guard
+
+    qs = MouvementDocument.objects.select_related('document', 'utilisateur').order_by('-date_action')
+
+    # Filtres
+    action_filtre = request.GET.get('action', '')
+    user_filtre   = request.GET.get('utilisateur', '')
+    doc_filtre    = request.GET.get('document', '').strip()
+    date_debut    = request.GET.get('date_debut', '')
+    date_fin      = request.GET.get('date_fin', '')
+
+    if action_filtre and action_filtre in [a[0] for a in MouvementDocument.Action.choices]:
+        qs = qs.filter(action=action_filtre)
+    if user_filtre:
+        qs = qs.filter(utilisateur_id=user_filtre)
+    if doc_filtre:
+        qs = qs.filter(
+            Q(document__identifiant__icontains=doc_filtre) |
+            Q(document__titre__icontains=doc_filtre)
+        )
+    if date_debut:
+        try:
+            from datetime import datetime
+            qs = qs.filter(date_action__date__gte=datetime.strptime(date_debut, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if date_fin:
+        try:
+            from datetime import datetime
+            qs = qs.filter(date_action__date__lte=datetime.strptime(date_fin, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+
+    from django.core.paginator import Paginator
+    paginator = Paginator(qs, 50)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
+
+    ctx = _notif_ctx(request)
+    ctx.update({
+        'page_obj':       page_obj,
+        'mouvements':     page_obj,
+        'actions':        MouvementDocument.Action.choices,
+        'utilisateurs':   User.objects.filter(is_active=True).order_by('last_name'),
+        'action_filtre':  action_filtre,
+        'user_filtre':    user_filtre,
+        'doc_filtre':     doc_filtre,
+        'date_debut':     date_debut,
+        'date_fin':       date_fin,
+        'total':          qs.count(),
+    })
+    return render(request, 'archives/admin/journal/list.html', ctx)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Admin — Provenance externe (AJAX endpoint + CRUD)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def admin_provenance_create_ajax(request):
+    """Endpoint AJAX pour créer une provenance externe via le popup du formulaire de dépôt."""
+    from django.http import JsonResponse
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'Non authentifié'}, status=401)
+    if not (est_archiviste(request.user) or est_admin(request.user)):
+        return JsonResponse({'ok': False, 'error': 'Accès refusé'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Méthode non supportée'}, status=405)
+    form = ProvenanceExterneForm(request.POST)
+    if form.is_valid():
+        from django.db import IntegrityError
+        try:
+            prov = ProvenanceExterne.objects.create(
+                code=form.cleaned_data['code'],
+                nom=form.cleaned_data['nom'],
+                description=form.cleaned_data.get('description', ''),
+                actif=form.cleaned_data.get('actif', True),
+            )
+            return JsonResponse({'ok': True, 'id': prov.pk, 'label': str(prov)})
+        except IntegrityError:
+            return JsonResponse({'ok': False, 'error': 'Ce code existe déjà.'}, status=400)
+    return JsonResponse({'ok': False, 'errors': form.errors}, status=400)

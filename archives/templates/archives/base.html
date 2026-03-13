@@ -134,9 +134,23 @@
     </a>
     {% endif %}
 
-    {% if est_admin %}
+    {% if est_gestionnaire %}
     <div class="nav-section">Administration</div>
+    <a href="{% url 'archives:admin_categories' %}"
+       class="nav-link{% if 'admin_categorie' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-tags-fill"></i>Catégories
+    </a>
+    <a href="{% url 'archives:admin_plans' %}"
+       class="nav-link{% if 'admin_plan' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-diagram-3-fill"></i>Plan de classement
+    </a>
+    <a href="{% url 'archives:admin_journal' %}"
+       class="nav-link{% if request.resolver_match.url_name == 'admin_journal' %} active{% endif %}">
+      <i class="bi bi-shield-lock-fill"></i>Journal d'audit
+    </a>
+    {% if est_admin %}
     <a href="/admin/" class="nav-link"><i class="bi bi-gear-fill"></i>Admin Django</a>
+    {% endif %}
     {% endif %}
 
     <div class="nav-section">Compte</div>

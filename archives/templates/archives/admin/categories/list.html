@@ -1,0 +1,73 @@
+{% extends "archives/base.html" %}
+{% block title %}Catégories de documents — Administration{% endblock %}
+{% block topbar_title %}Administration · Catégories de documents{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-1 fw-semibold"><i class="bi bi-tags-fill me-2 text-primary"></i>Catégories de documents</h5>
+    <p class="text-muted mb-0 small">Gérez les catégories documentaires utilisées pour classifier les archives.</p>
+  </div>
+  <a href="{% url 'archives:admin_categorie_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Ajouter une catégorie
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:100px">Code</th>
+          <th>Intitulé</th>
+          <th class="d-none d-md-table-cell">Description</th>
+          <th class="text-center" style="width:110px">Documents</th>
+          <th style="width:130px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td>
+            <span class="badge rounded-pill text-bg-primary px-3 py-1 fw-semibold" style="font-size:.8rem;letter-spacing:.5px">
+              {{ cat.code }}
+            </span>
+          </td>
+          <td class="fw-semibold align-middle">{{ cat.nom }}</td>
+          <td class="text-muted small d-none d-md-table-cell align-middle">
+            {{ cat.description|truncatechars:80|default:"—" }}
+          </td>
+          <td class="text-center align-middle">
+            <span class="badge {% if cat.nb_documents %}bg-success{% else %}bg-light text-muted{% endif %} rounded-pill">
+              {{ cat.nb_documents }}
+            </span>
+          </td>
+          <td class="align-middle">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'archives:admin_categorie_edit' cat.pk %}"
+                 class="btn btn-sm btn-outline-secondary" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'archives:admin_categorie_delete' cat.pk %}"
+                 class="btn btn-sm btn-outline-danger" title="Supprimer">
+                <i class="bi bi-trash3"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center py-5 text-muted">
+            <i class="bi bi-tags fs-2 d-block mb-2 opacity-40"></i>
+            Aucune catégorie enregistrée.
+            <a href="{% url 'archives:admin_categorie_create' %}" class="d-block mt-2">
+              Créer la première catégorie
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

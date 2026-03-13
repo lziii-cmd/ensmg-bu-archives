@@ -1,0 +1,79 @@
+{% extends "archives/base.html" %}
+{% block title %}{{ titre_page }} — Administration{% endblock %}
+{% block topbar_title %}Administration · {{ titre_page }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="d-flex align-items-center mb-3 gap-2">
+      <a href="{% url 'archives:admin_plans' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <h5 class="mb-0 fw-semibold">{{ titre_page }}</h5>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-5">
+              <label class="form-label fw-semibold">Cote <span class="text-danger">*</span></label>
+              {{ form.code }}
+              <div class="form-text">Ex: ENSMG-ADM-001</div>
+              {% if form.code.errors %}<div class="text-danger small mt-1">{{ form.code.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-7">
+              <label class="form-label fw-semibold">Intitulé <span class="text-danger">*</span></label>
+              {{ form.intitule }}
+              {% if form.intitule.errors %}<div class="text-danger small mt-1">{{ form.intitule.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Niveau <span class="text-danger">*</span></label>
+              {{ form.niveau }}
+              {% if form.niveau.errors %}<div class="text-danger small mt-1">{{ form.niveau.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Catégorie documentaire</label>
+              {{ form.categorie }}
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Rubrique parente</label>
+            {{ form.parent }}
+            <div class="form-text">Laisser vide pour créer un Fonds (niveau racine).</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Description</label>
+            {{ form.description }}
+          </div>
+
+          <div class="mb-4 form-check">
+            {{ form.actif }}
+            <label class="form-check-label fw-semibold ms-2">Rubrique active</label>
+            <div class="form-text">Décocher pour masquer cette rubrique sans la supprimer.</div>
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:admin_plans' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>{{ action }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

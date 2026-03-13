@@ -31,7 +31,7 @@ class CategorieDocument(models.Model):
         FINANCIER_RH   = 'FRH', 'Financier et ressources humaines'
         PATRIMONIAL    = 'PAT', 'Patrimonial et historique'
 
-    code        = models.CharField(max_length=10, choices=Code.choices, unique=True, verbose_name='Code')
+    code        = models.CharField(max_length=10, unique=True, verbose_name='Code')
     nom         = models.CharField(max_length=200, verbose_name='Intitulé')
     description = models.TextField(blank=True, verbose_name='Description')
 
@@ -446,7 +446,32 @@ class BordereauElimination(models.Model):
 
 
 # =============================================================================
-# 8. DÉPÔT DOCUMENT — VERSEMENT PAR UN AGENT
+# 8. PROVENANCE EXTERNE (référentiel contrôlé)
+# =============================================================================
+
+class ProvenanceExterne(models.Model):
+    """
+    Référentiel des provenances externes reconnues par l'ENSMG.
+    Permet d'identifier l'origine d'un document hors ENSMG (Rectorat, BU, ESP, etc.).
+    Géré par l'archiviste/admin via l'interface d'administration.
+    """
+    code        = models.CharField(max_length=30, unique=True, verbose_name='Code')
+    nom         = models.CharField(max_length=200, verbose_name='Nom de l\'organisme')
+    description = models.TextField(blank=True, verbose_name='Description')
+    actif       = models.BooleanField(default=True, verbose_name='Actif')
+    cree_le     = models.DateTimeField(auto_now_add=True, verbose_name='Créé le')
+
+    class Meta:
+        verbose_name        = 'Provenance externe'
+        verbose_name_plural = 'Provenances externes'
+        ordering            = ['nom']
+
+    def __str__(self):
+        return f"[{self.code}] {self.nom}"
+
+
+# =============================================================================
+# 9. DÉPÔT DOCUMENT — VERSEMENT PAR UN AGENT
 # =============================================================================
 
 class DepotDocument(models.Model):
@@ -495,6 +520,21 @@ class DepotDocument(models.Model):
     )
     date_traitement  = models.DateTimeField(null=True, blank=True, verbose_name='Date de traitement')
     motif_rejet      = models.TextField(blank=True, verbose_name='Motif du rejet')
+
+    # --- Provenance ---
+    provenance_interne = models.BooleanField(
+        default=True,
+        verbose_name='Provenance ENSMG (interne)',
+        help_text='Décochez si le document provient d\'un organisme externe (Rectorat, BU, ESP…)',
+    )
+    provenance_externe = models.ForeignKey(
+        'ProvenanceExterne',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Organisme externe',
+        help_text='Sélectionnez l\'organisme d\'origine du document',
+    )
+
     document_archive = models.OneToOneField(
         'Document',
         null=True, blank=True,

@@ -1,0 +1,104 @@
+{% extends "archives/base.html" %}
+{% block title %}Plan de classement — Administration{% endblock %}
+{% block topbar_title %}Administration · Plan de classement{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-1 fw-semibold"><i class="bi bi-diagram-3-fill me-2 text-primary"></i>Plan de classement</h5>
+    <p class="text-muted mb-0 small">Arborescence hiérarchique : Fonds › Série › Sous-série › Dossier.</p>
+  </div>
+  <a href="{% url 'archives:admin_plan_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Ajouter une rubrique
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:160px">Cote</th>
+          <th>Intitulé</th>
+          <th class="d-none d-md-table-cell">Catégorie</th>
+          <th class="text-center" style="width:100px">Niveau</th>
+          <th class="text-center" style="width:80px">Actif</th>
+          <th style="width:130px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in plans %}
+        <tr>
+          <td class="align-middle">
+            <!-- Indentation visuelle selon le niveau -->
+            {% if plan.niveau == 1 %}
+              <code class="text-primary fw-bold" style="font-size:.82rem">{{ plan.code }}</code>
+            {% elif plan.niveau == 2 %}
+              <span class="ms-2"><code class="text-secondary" style="font-size:.82rem">{{ plan.code }}</code></span>
+            {% elif plan.niveau == 3 %}
+              <span class="ms-4"><code class="text-muted" style="font-size:.8rem">{{ plan.code }}</code></span>
+            {% else %}
+              <span class="ms-5"><code style="font-size:.78rem">{{ plan.code }}</code></span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            {% if plan.niveau == 1 %}<span class="fw-semibold">{{ plan.intitule }}</span>
+            {% elif plan.niveau == 2 %}{{ plan.intitule }}
+            {% else %}<span class="text-muted">{{ plan.intitule }}</span>{% endif %}
+            {% if plan.parent %}
+            <span class="badge bg-light text-muted border ms-1" style="font-size:.68rem">
+              ↳ {{ plan.parent.code }}
+            </span>
+            {% endif %}
+          </td>
+          <td class="text-muted small d-none d-md-table-cell align-middle">
+            {% if plan.categorie %}
+            <span class="badge rounded-pill text-bg-light border" style="font-size:.72rem">
+              {{ plan.categorie.code }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-center align-middle">
+            <span class="badge rounded-pill
+              {% if plan.niveau == 1 %}bg-primary
+              {% elif plan.niveau == 2 %}bg-info text-dark
+              {% elif plan.niveau == 3 %}bg-secondary
+              {% else %}bg-light text-dark border{% endif %}"
+              style="font-size:.72rem">
+              {{ plan.get_niveau_display }}
+            </span>
+          </td>
+          <td class="text-center align-middle">
+            {% if plan.actif %}
+            <i class="bi bi-check-circle-fill text-success"></i>
+            {% else %}
+            <i class="bi bi-x-circle-fill text-danger opacity-50"></i>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'archives:admin_plan_edit' plan.pk %}"
+                 class="btn btn-sm btn-outline-secondary" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'archives:admin_plan_delete' plan.pk %}"
+                 class="btn btn-sm btn-outline-danger" title="Supprimer">
+                <i class="bi bi-trash3"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-5 text-muted">
+            <i class="bi bi-diagram-3 fs-2 d-block mb-2 opacity-40"></i>
+            Aucun plan de classement défini.
+            <a href="{% url 'archives:admin_plan_create' %}" class="d-block mt-2">Créer le premier fonds</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

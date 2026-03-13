@@ -1,0 +1,247 @@
+{% extends "archives/base.html" %}
+{% block title %}Journal d'audit — Administration{% endblock %}
+{% block topbar_title %}Administration · Journal d'audit{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Timeline de l'audit ── */
+  .audit-timeline { position: relative; }
+  .audit-timeline::before {
+    content: '';
+    position: absolute; left: 42px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, #dee2e6, transparent);
+    z-index: 0;
+  }
+  .audit-entry {
+    display: flex; gap: 1rem; align-items: flex-start;
+    padding: .75rem .5rem; position: relative; z-index: 1;
+    border-radius: 8px; transition: background .12s;
+  }
+  .audit-entry:hover { background: rgba(0,0,0,.025); }
+  .audit-icon-wrap {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 1rem;
+    border: 3px solid #fff; box-shadow: 0 0 0 2px #dee2e6;
+    background: #fff;
+  }
+  .audit-body { flex: 1; min-width: 0; }
+  .audit-title { font-weight: 600; font-size: .875rem; }
+  .audit-meta { font-size: .76rem; color: #6c757d; }
+  .audit-doc { font-size: .78rem; font-family: monospace; }
+  .audit-comment { font-size: .78rem; color: #495057; font-style: italic; }
+  .audit-date { font-size: .72rem; color: #adb5bd; white-space: nowrap; }
+
+  /* Couleur par type d'action */
+  .icon-creation { background: rgba(25,135,84,.1); color: #198754; box-shadow: 0 0 0 2px rgba(25,135,84,.3); }
+  .icon-modification { background: rgba(13,110,253,.1); color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,.3); }
+  .icon-consultation { background: rgba(108,117,125,.1); color: #6c757d; box-shadow: 0 0 0 2px rgba(108,117,125,.3); }
+  .icon-telechargement { background: rgba(111,66,193,.1); color: #6f42c1; box-shadow: 0 0 0 2px rgba(111,66,193,.3); }
+  .icon-elimination { background: rgba(220,53,69,.1); color: #dc3545; box-shadow: 0 0 0 2px rgba(220,53,69,.3); }
+  .icon-versement { background: rgba(255,153,0,.1); color: #fd7e14; box-shadow: 0 0 0 2px rgba(255,153,0,.3); }
+  .icon-transfert { background: rgba(13,202,240,.1); color: #0dcaf0; box-shadow: 0 0 0 2px rgba(13,202,240,.3); }
+  .icon-restauration { background: rgba(32,201,151,.1); color: #20c997; box-shadow: 0 0 0 2px rgba(32,201,151,.3); }
+  .icon-changement_statut { background: rgba(255,193,7,.1); color: #ffc107; box-shadow: 0 0 0 2px rgba(255,193,7,.3); }
+
+  .filter-bar { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .badge-action { font-size: .68rem; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête stats -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="display-6 fw-bold text-primary mb-1">{{ total }}</div>
+      <div class="text-muted small">Entrées (filtrées)</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-9 d-flex align-items-center">
+    <div>
+      <h5 class="mb-1 fw-semibold"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Journal d'audit</h5>
+      <p class="text-muted mb-0 small">
+        Trace immuable de toutes les actions sur les documents. Aucune entrée ne peut être modifiée ou supprimée.
+        <span class="badge bg-success ms-1" style="font-size:.65rem">ISO 15489</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres -->
+<div class="filter-bar p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Type d'action</label>
+      <select name="action" class="form-select form-select-sm">
+        <option value="">Toutes les actions</option>
+        {% for val, lab in actions %}
+        <option value="{{ val }}" {% if action_filtre == val %}selected{% endif %}>{{ lab }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Utilisateur</label>
+      <select name="utilisateur" class="form-select form-select-sm">
+        <option value="">Tous les utilisateurs</option>
+        {% for u in utilisateurs %}
+        <option value="{{ u.pk }}" {% if user_filtre == u.pk|stringformat:"s" %}selected{% endif %}>
+          {{ u.get_full_name|default:u.username }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-semibold mb-1">Document / ID</label>
+      <input type="text" name="document" class="form-control form-control-sm"
+             placeholder="Identifiant ou titre…" value="{{ doc_filtre }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-semibold mb-1">Du</label>
+      <input type="date" name="date_debut" class="form-control form-control-sm" value="{{ date_debut }}">
+    </div>
+    <div class="col-md-1">
+      <label class="form-label small fw-semibold mb-1">Au</label>
+      <input type="date" name="date_fin" class="form-control form-control-sm" value="{{ date_fin }}">
+    </div>
+    <div class="col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-primary btn-sm w-100">
+        <i class="bi bi-funnel-fill"></i>
+      </button>
+      {% if action_filtre or user_filtre or doc_filtre or date_debut or date_fin %}
+      <a href="{% url 'archives:admin_journal' %}" class="btn btn-outline-secondary btn-sm" title="Effacer les filtres">
+        <i class="bi bi-x-lg"></i>
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Timeline du journal -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body px-3 py-3">
+    {% if page_obj.object_list %}
+    <div class="audit-timeline">
+      {% for mvt in page_obj %}
+
+      {% with action=mvt.action|lower %}
+      <div class="audit-entry">
+        <!-- Icône -->
+        <div class="audit-icon-wrap icon-{{ action }}">
+          {% if mvt.action == 'CREATION' %}<i class="bi bi-plus-circle-fill"></i>
+          {% elif mvt.action == 'MODIFICATION' %}<i class="bi bi-pencil-fill"></i>
+          {% elif mvt.action == 'CONSULTATION' %}<i class="bi bi-eye-fill"></i>
+          {% elif mvt.action == 'TELECHARGEMENT' %}<i class="bi bi-download"></i>
+          {% elif mvt.action == 'ELIMINATION' %}<i class="bi bi-trash3-fill"></i>
+          {% elif mvt.action == 'VERSEMENT' %}<i class="bi bi-send-fill"></i>
+          {% elif mvt.action == 'TRANSFERT' %}<i class="bi bi-arrow-left-right"></i>
+          {% elif mvt.action == 'RESTAURATION' %}<i class="bi bi-arrow-counterclockwise"></i>
+          {% elif mvt.action == 'CHANGEMENT_STATUT' %}<i class="bi bi-arrow-repeat"></i>
+          {% else %}<i class="bi bi-activity"></i>{% endif %}
+        </div>
+
+        <!-- Corps -->
+        <div class="audit-body">
+          <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+            <div>
+              <div class="audit-title">
+                {{ mvt.get_action_display }}
+                <span class="badge badge-action
+                  {% if mvt.action == 'CREATION' %}bg-success
+                  {% elif mvt.action == 'MODIFICATION' %}bg-primary
+                  {% elif mvt.action == 'CONSULTATION' %}text-bg-secondary
+                  {% elif mvt.action == 'TELECHARGEMENT' %}text-bg-info text-dark
+                  {% elif mvt.action == 'ELIMINATION' %}bg-danger
+                  {% elif mvt.action == 'VERSEMENT' %}text-bg-warning text-dark
+                  {% elif mvt.action == 'RESTAURATION' %}text-bg-success
+                  {% else %}text-bg-light border{% endif %} ms-1 rounded-pill">
+                  {{ mvt.action }}
+                </span>
+              </div>
+              <div class="audit-doc mt-1">
+                <i class="bi bi-file-earmark-text me-1 text-muted"></i>
+                <a href="{% url 'archives:document_detail' mvt.document.pk %}"
+                   class="text-decoration-none text-primary">
+                  {{ mvt.document.identifiant }}
+                </a>
+                <span class="text-muted ms-1">— {{ mvt.document.titre|truncatechars:60 }}</span>
+              </div>
+              {% if mvt.commentaire %}
+              <div class="audit-comment mt-1">
+                <i class="bi bi-chat-left-text me-1 opacity-50"></i>{{ mvt.commentaire|truncatechars:120 }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="text-end flex-shrink-0">
+              <div class="audit-date">
+                <i class="bi bi-clock me-1"></i>{{ mvt.date_action|date:"d/m/Y H:i:s" }}
+              </div>
+              <div class="audit-meta mt-1">
+                {% if mvt.utilisateur %}
+                <i class="bi bi-person me-1"></i>{{ mvt.utilisateur.get_full_name|default:mvt.utilisateur.username }}
+                {% else %}
+                <span class="text-muted">Système</span>
+                {% endif %}
+              </div>
+              {% if mvt.adresse_ip %}
+              <div class="audit-meta"><i class="bi bi-globe2 me-1 opacity-50"></i>{{ mvt.adresse_ip }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Séparateur de date -->
+      {% if forloop.last %}{% else %}
+      {% with next_mvt=page_obj.object_list|slice:forloop.counter|first %}
+      {% if mvt.date_action.date != next_mvt.date_action.date %}
+      <div class="text-center py-2">
+        <span class="badge bg-light text-muted border" style="font-size:.7rem">
+          <i class="bi bi-calendar3 me-1"></i>{{ next_mvt.date_action|date:"l d F Y" }}
+        </span>
+      </div>
+      {% endif %}
+      {% endwith %}
+      {% endif %}
+      {% endwith %}
+
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4 d-flex justify-content-center">
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&action={{ action_filtre }}&utilisateur={{ user_filtre }}&document={{ doc_filtre }}&date_debut={{ date_debut }}&date_fin={{ date_fin }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+          <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&action={{ action_filtre }}&utilisateur={{ user_filtre }}&document={{ doc_filtre }}&date_debut={{ date_debut }}&date_fin={{ date_fin }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-journal-x fs-1 d-block mb-3 opacity-30"></i>
+      <strong>Aucune entrée ne correspond aux filtres.</strong>
+      <div class="mt-2 small">Modifiez vos critères de recherche.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

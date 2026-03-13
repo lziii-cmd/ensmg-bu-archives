@@ -1,0 +1,58 @@
+{% extends "archives/base.html" %}
+{% block title %}{{ titre_page }} — Administration{% endblock %}
+{% block topbar_title %}Administration · {{ titre_page }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="d-flex align-items-center mb-3 gap-2">
+      <a href="{% url 'archives:admin_categories' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <h5 class="mb-0 fw-semibold">{{ titre_page }}</h5>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
+            {{ form.code }}
+            <div class="form-text">Code court unique, ex : ADM, PED, SCI… (majuscules automatiques)</div>
+            {% if form.code.errors %}
+            <div class="text-danger small mt-1">{{ form.code.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Intitulé <span class="text-danger">*</span></label>
+            {{ form.nom }}
+            {% if form.nom.errors %}
+            <div class="text-danger small mt-1">{{ form.nom.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Description <span class="text-muted fw-normal">(optionnel)</span></label>
+            {{ form.description }}
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'archives:admin_categories' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>{{ action }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

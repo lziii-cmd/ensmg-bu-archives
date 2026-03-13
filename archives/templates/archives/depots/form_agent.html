@@ -123,6 +123,54 @@
             {% endif %}
           </div>
 
+          <!-- ── Provenance ── -->
+          <div class="mb-4 border rounded p-3" style="background:#f8f9fa">
+            <div class="fw-semibold mb-2">
+              <i class="bi bi-building me-1 text-secondary"></i>Provenance du document
+            </div>
+
+            <!-- Toggle interne / externe -->
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="id_provenance_interne" name="provenance_interne"
+                       {% if form.provenance_interne.value != False %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="id_provenance_interne">
+                  Provenance ENSMG (interne)
+                </label>
+              </div>
+              <span class="badge bg-success" id="badge-interne">ENSMG Interne</span>
+              <span class="badge bg-warning text-dark d-none" id="badge-externe">Externe</span>
+            </div>
+
+            <!-- Section provenance externe (masquée par défaut) -->
+            <div id="section-externe" class="d-none">
+              <div class="row g-2 align-items-end">
+                <div class="col">
+                  <label class="form-label small fw-semibold mb-1">
+                    Organisme externe <span class="text-danger">*</span>
+                  </label>
+                  {{ form.provenance_externe }}
+                  {% if form.provenance_externe.errors %}
+                  <div class="text-danger small mt-1">{{ form.provenance_externe.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                {% if est_gestionnaire %}
+                <div class="col-auto">
+                  <button type="button" class="btn btn-outline-secondary btn-sm"
+                          data-bs-toggle="modal" data-bs-target="#modalNouvelleProvenance"
+                          title="Créer une nouvelle provenance">
+                    <i class="bi bi-plus-lg me-1"></i>Nouvelle
+                  </button>
+                </div>
+                {% endif %}
+              </div>
+              <div class="form-text mt-1">
+                Sélectionnez l'organisme d'origine du document (ex : Rectorat, BU, ESP…).
+              </div>
+            </div>
+          </div>
+
           <hr class="my-3">
           <div class="d-flex gap-2 justify-content-end">
             <a href="{% url 'archives:mes_depots' %}" class="btn btn-outline-secondary">
@@ -139,4 +187,125 @@
 
   </div>
 </div>
+
+<!-- ── Modal nouvelle provenance externe (visible seulement pour archiviste/admin) ── -->
+{% if est_gestionnaire %}
+<div class="modal fade" id="modalNouvelleProvenance" tabindex="-1" aria-labelledby="modalProvenanceLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-semibold" id="modalProvenanceLabel">
+          <i class="bi bi-building-add me-2 text-primary"></i>Créer une nouvelle provenance
+        </h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="prov-error" class="alert alert-danger small d-none"></div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Code court <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="prov-code" placeholder="Ex: RECTO, BU, ESP"
+                 style="text-transform:uppercase" maxlength="30">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Nom de l'organisme <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="prov-nom" placeholder="Ex: Rectorat de l'UCAD" maxlength="200">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Description <span class="text-muted fw-normal">(optionnel)</span></label>
+          <textarea class="form-control" id="prov-description" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="btn-sauver-provenance">
+          <i class="bi bi-check-lg me-1"></i>Créer la provenance
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const toggle     = document.getElementById('id_provenance_interne');
+  const sectionExt = document.getElementById('section-externe');
+  const badgeInt   = document.getElementById('badge-interne');
+  const badgeExt   = document.getElementById('badge-externe');
+
+  function updateProvenance() {
+    const interne = toggle && toggle.checked;
+    if (sectionExt) sectionExt.classList.toggle('d-none', interne);
+    if (badgeInt)   badgeInt.classList.toggle('d-none', !interne);
+    if (badgeExt)   badgeExt.classList.toggle('d-none', interne);
+  }
+
+  if (toggle) {
+    toggle.addEventListener('change', updateProvenance);
+    updateProvenance();
+  }
+
+  {% if est_gestionnaire %}
+  // ── Création AJAX d'une provenance externe ──────────────────────────────────
+  const btnSauver = document.getElementById('btn-sauver-provenance');
+  const errDiv    = document.getElementById('prov-error');
+  const select    = document.getElementById('id_provenance_externe');
+
+  if (btnSauver) {
+    btnSauver.addEventListener('click', function () {
+      const code = document.getElementById('prov-code').value.trim().toUpperCase();
+      const nom  = document.getElementById('prov-nom').value.trim();
+      const desc = document.getElementById('prov-description').value.trim();
+
+      if (!code || !nom) {
+        errDiv.textContent = 'Le code et le nom sont obligatoires.';
+        errDiv.classList.remove('d-none');
+        return;
+      }
+      errDiv.classList.add('d-none');
+      btnSauver.disabled = true;
+      btnSauver.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Création…';
+
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const formData  = new FormData();
+      formData.append('code', code);
+      formData.append('nom', nom);
+      formData.append('description', desc);
+      formData.append('actif', 'on');
+
+      fetch("{% url 'archives:admin_provenance_ajax' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData,
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          const opt = new Option(data.label, data.id, true, true);
+          select.add(opt);
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modalNouvelleProvenance'));
+          if (modal) modal.hide();
+          document.getElementById('prov-code').value = '';
+          document.getElementById('prov-nom').value  = '';
+          document.getElementById('prov-description').value = '';
+        } else {
+          errDiv.textContent = data.error || 'Erreur lors de la création.';
+          errDiv.classList.remove('d-none');
+        }
+      })
+      .catch(() => {
+        errDiv.textContent = 'Erreur réseau. Veuillez réessayer.';
+        errDiv.classList.remove('d-none');
+      })
+      .finally(() => {
+        btnSauver.disabled = false;
+        btnSauver.innerHTML = '<i class="bi bi-check-lg me-1"></i>Créer la provenance';
+      });
+    });
+  }
+  {% endif %}
+})();
+</script>
 {% endblock %}

@@ -1,24 +1,99 @@
 {% extends "archives/base.html" %}
 {% block title %}Visualisation — {{ document.titre|truncatechars:40 }}{% endblock %}
-{% block topbar_title %}Visualisation PDF — {{ document.titre|truncatechars:40 }}{% endblock %}
+{% block topbar_title %}Visualisation — {{ document.titre|truncatechars:60 }}{% endblock %}
 
 {% block extra_head %}
 <style>
-  .page-body { padding: 0.5rem; }
-  #pdf-frame { width: 100%; height: calc(100vh - 100px); border: none; border-radius: 8px; }
+  .viewer-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+  }
+  .viewer-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    flex-shrink: 0;
+  }
+  .viewer-frame-container {
+    flex: 1;
+    position: relative;
+    background: #525659;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #pdf-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+  .viewer-fallback {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #ccc;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <a href="{% url 'archives:document_detail' document.pk %}" class="btn btn-sm btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i>Retour à la fiche
-  </a>
-  <a href="{% url 'archives:document_telecharger' document.pk %}" class="btn btn-sm btn-success">
-    <i class="bi bi-download me-1"></i>Télécharger
-  </a>
+<div class="viewer-wrapper">
+
+  <!-- Barre d'outils -->
+  <div class="viewer-toolbar">
+    <a href="{% url 'archives:document_detail' document.pk %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Retour à la fiche
+    </a>
+    <span class="text-muted small fw-semibold">{{ document.titre|truncatechars:60 }}</span>
+    <a href="{% url 'archives:document_telecharger' document.pk %}" class="btn btn-sm btn-success">
+      <i class="bi bi-download me-1"></i>Télécharger
+    </a>
+  </div>
+
+  <!-- Visionneuse PDF native -->
+  <div class="viewer-frame-container">
+    <iframe
+      id="pdf-frame"
+      src="{% url 'archives:document_serve' document.pk %}"
+      title="Visualisation de {{ document.titre }}"
+    ></iframe>
+
+    <!-- Fallback si le navigateur ne supporte pas les PDF inline -->
+    <div class="viewer-fallback" id="pdf-fallback">
+      <i class="bi bi-file-earmark-pdf" style="font-size: 4rem; color: #e74c3c;"></i>
+      <p>Votre navigateur ne peut pas afficher ce PDF directement.</p>
+      <a href="{% url 'archives:document_telecharger' document.pk %}" class="btn btn-success">
+        <i class="bi bi-download me-2"></i>Télécharger le document
+      </a>
+    </div>
+  </div>
+
 </div>
-<iframe id="pdf-frame"
-  src="https://mozilla.github.io/pdf.js/web/viewer.html?file={{ fichier_url|urlencode }}">
-</iframe>
+
+<script>
+  // Détection basique : si l'iframe échoue à charger un PDF, on affiche le fallback
+  const frame = document.getElementById('pdf-frame');
+  const fallback = document.getElementById('pdf-fallback');
+
+  frame.addEventListener('error', function () {
+    frame.style.display = 'none';
+    fallback.style.display = 'flex';
+  });
+
+  // Certains navigateurs mobiles ne rendent pas les PDF en iframe
+  // On peut détecter via user agent et proposer directement le téléchargement
+  const ua = navigator.userAgent.toLowerCase();
+  const isMobileNoPlugin = /android/.test(ua) && !/chrome/.test(ua);
+  if (isMobileNoPlugin) {
+    frame.style.display = 'none';
+    fallback.style.display = 'flex';
+  }
+</script>
 {% endblock %}

@@ -37,15 +37,37 @@ class DepotAgentForm(forms.Form):
                                       'placeholder': 'Ex : budget, 2023, conseil scientifique…'})
     )
 
+    # ── Provenance ────────────────────────────────────────────────────────────
+    provenance_interne = forms.BooleanField(
+        required=False, initial=True, label="Provenance ENSMG (interne)",
+    )
+    provenance_externe = forms.IntegerField(
+        required=False, label="Organisme externe",
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_provenance_externe'})
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from archives.models import CategorieDocument
+        from archives.models import CategorieDocument, ProvenanceExterne
         self.fields['categorie'].widget = forms.Select(
             attrs={'class': 'form-select'},
             choices=[('', '— Aucune categorie —')] + [
                 (c.pk, str(c)) for c in CategorieDocument.objects.all()
             ]
         )
+        self.fields['provenance_externe'].widget = forms.Select(
+            attrs={'class': 'form-select', 'id': 'id_provenance_externe'},
+            choices=[('', '— Sélectionner un organisme —')] + [
+                (p.pk, str(p)) for p in ProvenanceExterne.objects.filter(actif=True)
+            ]
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        provenance_interne = cleaned.get('provenance_interne', True)
+        if not provenance_interne and not cleaned.get('provenance_externe'):
+            self.add_error('provenance_externe', "Sélectionnez l'organisme externe ou cochez 'Provenance ENSMG'.")
+        return cleaned
 
 
 # ── Traitement dépôt ARCHIVISTE ───────────────────────────────────────────────
@@ -373,3 +395,105 @@ class TraiterRechercheForm(forms.Form):
         if cleaned.get('decision') == 'REFUSER' and not cleaned.get('motif_refus', '').strip():
             self.add_error('motif_refus', "Le motif est obligatoire.")
         return cleaned
+
+
+# ── Administration — Catégorie de document ────────────────────────────────────
+
+class CategorieDocumentForm(forms.Form):
+    """CRUD catégorie — l'admin peut créer n'importe quel code (pas limité aux 8 fixes)."""
+    code = forms.CharField(
+        max_length=10, label="Code (ex : ADM, SCI…)",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: ADM, SCI, GEO…',
+                                      'style': 'text-transform:uppercase'})
+    )
+    nom = forms.CharField(
+        max_length=200, label="Intitulé",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom complet de la catégorie'})
+    )
+    description = forms.CharField(
+        required=False, label="Description",
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3,
+                                     'placeholder': 'Description facultative…'})
+    )
+
+    def clean_code(self):
+        return self.cleaned_data['code'].strip().upper()
+
+
+# ── Administration — Plan de classement ─────────────────────────────────────
+
+class PlanClassementForm(forms.Form):
+    """CRUD plan de classement."""
+    NIVEAU_CHOICES = [
+        ('', '---------'),
+        (1, 'Fonds'),
+        (2, 'Série'),
+        (3, 'Sous-série'),
+        (4, 'Dossier'),
+    ]
+
+    code = forms.CharField(
+        max_length=30, label="Cote (ex : ENSMG-ADM-001)",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: ENSMG-ADM-001'})
+    )
+    intitule = forms.CharField(
+        max_length=300, label="Intitulé",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Titre du plan de classement'})
+    )
+    niveau = forms.IntegerField(
+        label="Niveau hiérarchique",
+        widget=forms.Select(attrs={'class': 'form-select'}, choices=NIVEAU_CHOICES)
+    )
+    parent = forms.IntegerField(
+        required=False, label="Rubrique parente (facultatif)",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    categorie = forms.IntegerField(
+        required=False, label="Catégorie documentaire (facultatif)",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    description = forms.CharField(
+        required=False, label="Description",
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
+    )
+    actif = forms.BooleanField(required=False, initial=True, label="Actif")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from archives.models import PlanClassement, CategorieDocument
+        self.fields['parent'].widget = forms.Select(
+            attrs={'class': 'form-select'},
+            choices=[('', '— Aucun parent (niveau racine) —')] + [
+                (p.pk, f"{p.code} — {p.intitule}") for p in PlanClassement.objects.filter(actif=True).order_by('code')
+            ]
+        )
+        self.fields['categorie'].widget = forms.Select(
+            attrs={'class': 'form-select'},
+            choices=[('', '— Aucune catégorie —')] + [
+                (c.pk, str(c)) for c in CategorieDocument.objects.all()
+            ]
+        )
+
+
+# ── Administration — Provenance externe ─────────────────────────────────────
+
+class ProvenanceExterneForm(forms.Form):
+    """Création/modification d'une provenance externe."""
+    code = forms.CharField(
+        max_length=30, label="Code court (ex : RECTO, BU, ESP)",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: RECTO',
+                                      'style': 'text-transform:uppercase'})
+    )
+    nom = forms.CharField(
+        max_length=200, label="Nom de l'organisme",
+        widget=forms.TextInput(attrs={'class': 'form-control',
+                                      'placeholder': 'Ex: Rectorat de l\'UCAD'})
+    )
+    description = forms.CharField(
+        required=False, label="Description",
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2})
+    )
+    actif = forms.BooleanField(required=False, initial=True, label="Actif")
+
+    def clean_code(self):
+        return self.cleaned_data['code'].strip().upper()
