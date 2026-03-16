@@ -1,0 +1,79 @@
+{% extends "archives/base.html" %}
+{% block title %}Bordereaux d'élimination — Archives ENSMG{% endblock %}
+{% block topbar_title %}Bordereaux d'élimination{% endblock %}
+
+{% block content %}
+{% include "archives/_breadcrumb.html" %}
+
+<div class="alert alert-warning border-0 shadow-sm mb-4 d-flex gap-3 align-items-start">
+  <i class="bi bi-shield-exclamation fs-4 flex-shrink-0 mt-1"></i>
+  <div>
+    <strong>Obligation légale (Loi 2006-19, art. 12)</strong><br>
+    <small>Toute élimination d'archive publique est <strong>subordonnée au visa</strong> de la Direction des Archives du Sénégal (DAS).
+    Aucune destruction ne peut intervenir sans ce visa préalable.</small>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h5 class="mb-0 fw-bold">Bordereaux d'élimination</h5>
+  <a href="{% url 'archives:admin_bordereau_elimination_create' %}" class="btn btn-danger">
+    <i class="bi bi-plus-circle me-2"></i>Nouveau bordereau
+  </a>
+</div>
+
+{% if bordereaux %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Numéro</th><th>Service</th><th>Documents</th>
+            <th>Date</th><th>Visa DAS</th><th>Statut</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for be in bordereaux %}
+        <tr>
+          <td class="fw-semibold font-monospace small">{{ be.numero }}</td>
+          <td class="small">{{ be.service_producteur|truncatechars:25 }}</td>
+          <td><span class="badge bg-danger rounded-pill">{{ be.nb_documents }}</span></td>
+          <td class="text-muted small">{{ be.date_creation|date:"d/m/Y" }}</td>
+          <td>
+            {% if be.visa_das %}
+              <span class="badge bg-success"><i class="bi bi-check me-1"></i>Obtenu</span>
+            {% else %}
+              <span class="badge bg-secondary">En attente</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if be.statut == 'BROUILLON' %}<span class="badge bg-secondary">Brouillon</span>
+            {% elif be.statut == 'EN_VALIDATION' %}<span class="badge bg-warning text-dark">Attente visa DAS</span>
+            {% elif be.statut == 'VISA_OBTENU' %}<span class="badge bg-info">Visa obtenu</span>
+            {% elif be.statut == 'EXECUTE' %}<span class="badge bg-danger">Exécuté</span>
+            {% elif be.statut == 'REJETE' %}<span class="badge bg-secondary">Rejeté</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'archives:admin_bordereau_elimination_detail' be.pk %}"
+               class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-eye me-1"></i>Voir
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-trash3 fs-1 text-muted opacity-50 d-block mb-3"></i>
+    <h6 class="text-muted">Aucun bordereau d'élimination</h6>
+    <p class="text-muted small mb-0">Les éliminations doivent impérativement passer par un bordereau avec visa de la DAS.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

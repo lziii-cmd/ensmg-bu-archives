@@ -1,0 +1,514 @@
+{% extends "archives/base.html" %}
+{% block title %}{{ be.numero }} — Bordereau d'élimination{% endblock %}
+{% block topbar_title %}Bordereau {{ be.numero }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show border-0 shadow-sm py-2 mb-3" role="alert">
+    {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    <!-- Colonne principale : document institutionnel -->
+    <div class="col-lg-8">
+
+      <!-- ═══ CONSTAT DE DESTRUCTION (statut EXECUTE uniquement) ════════════════ -->
+      {% if be.statut == 'EXECUTE' %}
+      <div class="card border-danger shadow-sm mb-3" id="constat-print">
+        <div class="card-body p-4">
+
+          <!-- En-tête institutionnelle -->
+          <div class="border border-danger rounded-2 p-3 mb-4">
+            <div class="row align-items-center mb-2">
+              <div class="col-md-8">
+                <div class="text-center text-uppercase fw-bold" style="font-size:.78rem; letter-spacing:.06rem; color:#555;">
+                  République du Sénégal
+                </div>
+                <div class="text-center text-muted" style="font-size:.7rem;">
+                  Un Peuple — Un But — Une Foi
+                </div>
+                <div class="text-center text-muted" style="font-size:.7rem;">
+                  Ministère des Mines et de la Géologie
+                </div>
+                <hr class="my-2" style="border-color:#ccc;">
+                <div class="text-center fw-bold" style="font-size:1rem; color:#8b0000; letter-spacing:.02rem;">
+                  École Nationale Supérieure des Mines et de la Géologie
+                </div>
+                <div class="text-center text-muted" style="font-size:.72rem;">ENSMG — Thiès, Sénégal</div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="border border-danger rounded p-2 d-inline-block text-start" style="background:#fff8f8; min-width:160px;">
+                  <div class="text-muted" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.05rem;">N° Bordereau</div>
+                  <div class="fw-bold font-monospace" style="font-size:.85rem; color:#8b0000;">{{ be.numero }}</div>
+                  <div class="text-muted mt-1" style="font-size:.65rem;">Date élimination :</div>
+                  <div class="fw-bold" style="font-size:.75rem; color:#8b0000;">{{ be.date_elimination|date:"d/m/Y" }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center py-2 border-top border-bottom mt-2"
+                 style="background:#8b0000; color:#fff; margin:0 -1px; border-radius:4px; letter-spacing:.08rem;">
+              <span class="fw-bold text-uppercase" style="font-size:.9rem;">
+                <i class="bi bi-trash3 me-2"></i>Constat de Destruction d'Archives
+              </span>
+            </div>
+
+            <div class="row g-2 mt-2 small">
+              <div class="col-sm-6">
+                <span class="text-muted">Service producteur :</span>
+                <strong class="ms-1">{{ be.service_producteur }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Archiviste responsable :</span>
+                <strong class="ms-1">{{ be.cree_par.get_full_name|default:be.cree_par.username }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Date d'élimination :</span>
+                <strong class="ms-1 text-danger">{{ be.date_elimination|date:"d/m/Y" }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Visa DAS :</span>
+                <strong class="ms-1 text-success">{{ be.reference_visa }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Date visa :</span>
+                <strong class="ms-1">{{ be.date_visa|date:"d/m/Y" }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Nombre de documents éliminés :</span>
+                <strong class="ms-1 text-danger">{{ be.nb_documents }}</strong>
+              </div>
+              <div class="col-12">
+                <span class="text-muted">Motif :</span>
+                <span class="ms-1 fst-italic">{{ be.motif }}</span>
+              </div>
+              {% if be.observations %}
+              <div class="col-12">
+                <span class="text-muted">Observations :</span>
+                <span class="ms-1">{{ be.observations }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Table des documents éliminés -->
+          <h6 class="fw-semibold text-uppercase small text-muted mb-2">
+            <i class="bi bi-list-check me-1"></i>
+            Inventaire des documents détruits
+            <span class="badge bg-danger rounded-pill ms-2">{{ docs.count }}</span>
+          </h6>
+
+          <div class="table-responsive mb-4">
+            <table class="table table-bordered table-hover mb-0 align-middle" style="font-size:.79rem;">
+              <thead style="background:#8b0000; color:#fff;">
+                <tr>
+                  <th class="text-center" style="width:36px;">#</th>
+                  <th>Référence</th>
+                  <th>Titre</th>
+                  <th>Catégorie</th>
+                  <th>Localisation</th>
+                  <th>DUA échue</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for doc in docs %}
+              <tr class="text-muted">
+                <td class="text-center fw-semibold">{{ forloop.counter }}</td>
+                <td class="font-monospace small">
+                  <s>{{ doc.identifiant }}</s>
+                </td>
+                <td><s>{{ doc.titre|truncatechars:50 }}</s></td>
+                <td><span class="badge bg-light text-dark border">{{ doc.categorie.code }}</span></td>
+                <td class="small">{{ doc.localisation_physique|default:"—" }}</td>
+                <td class="text-nowrap">{{ doc.date_fin_dua|date:"d/m/Y"|default:"—" }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">Aucun document</td></tr>
+              {% endfor %}
+              </tbody>
+              <tfoot class="table-light fw-semibold small">
+                <tr>
+                  <td colspan="4">Total : {{ docs.count }} document(s) éliminé(s)</td>
+                  <td colspan="2" class="text-muted text-end">Loi 2006-19 — Sénégal</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Attestation légale -->
+          <div class="border border-danger rounded p-3 mb-4 small" style="background:#fff8f8;">
+            <p class="mb-1">
+              <strong>Je soussigné(e), {{ be.cree_par.get_full_name|default:be.cree_par.username }}, archiviste de l'ENSMG,</strong>
+              atteste avoir procédé à la destruction physique des <strong>{{ be.nb_documents }} document(s)</strong>
+              listés ci-dessus le <strong>{{ be.date_elimination|date:"d/m/Y" }}</strong>,
+              conformément au visa n° <strong>{{ be.reference_visa }}</strong>
+              délivré par la Direction des Archives du Sénégal le {{ be.date_visa|date:"d/m/Y" }}.
+            </p>
+            <p class="mb-0 text-muted fst-italic">
+              Cette élimination a été effectuée conformément à la loi sénégalaise n° 2006-19 du 30 juin 2006
+              relative aux archives et aux dispositions du tableau de gestion des archives de l'ENSMG.
+            </p>
+          </div>
+
+          <!-- Bloc signatures -->
+          <div class="row g-4 mt-1 small">
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">L'archiviste</div>
+                <div style="height:48px;"></div>
+                <div class="fw-semibold">{{ be.cree_par.get_full_name|default:be.cree_par.username }}</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature &amp; Cachet</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">Témoin désigné</div>
+                <div style="height:48px;"></div>
+                <div class="fw-semibold">—</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">Le Directeur ENSMG</div>
+                <div style="height:48px;"></div>
+                <div class="fw-semibold">Direction générale</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature &amp; Cachet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-danger bg-opacity-10 border-top border-danger d-flex justify-content-between align-items-center py-2">
+          <span class="text-danger small fw-semibold">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            Destruction exécutée — document irréversible
+          </span>
+          <button class="btn btn-sm btn-outline-danger" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimer le constat
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ═══ BORDEREAU (tous statuts) ════════════════════════════════════════ -->
+      {% if be.statut != 'EXECUTE' %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-4">
+
+          <!-- En-tête institutionnelle -->
+          <div class="border rounded-2 p-3 mb-4" style="background:#f8f9fc;">
+            <div class="row align-items-center mb-2">
+              <div class="col-md-8">
+                <div class="text-center text-uppercase fw-bold" style="font-size:.78rem; letter-spacing:.06rem; color:#555;">
+                  République du Sénégal
+                </div>
+                <div class="text-center text-muted" style="font-size:.7rem;">
+                  Ministère des Mines et de la Géologie
+                </div>
+                <hr class="my-2" style="border-color:#ccc;">
+                <div class="text-center fw-bold" style="font-size:1rem; color:#1a3a5c;">
+                  École Nationale Supérieure des Mines et de la Géologie
+                </div>
+                <div class="text-center text-muted" style="font-size:.72rem;">ENSMG — Thiès, Sénégal</div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="border rounded p-2 d-inline-block text-start" style="background:#fff; min-width:160px;">
+                  <div class="text-muted" style="font-size:.62rem; text-transform:uppercase;">N° Bordereau</div>
+                  <div class="fw-bold font-monospace" style="font-size:.85rem; color:#1a3a5c;">{{ be.numero }}</div>
+                  <div class="text-muted mt-1" style="font-size:.65rem;">Créé le : {{ be.date_creation|date:"d/m/Y" }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center py-2 border-top border-bottom mt-2"
+                 style="background:#1a3a5c; color:#fff; margin:0 -1px; border-radius:4px; letter-spacing:.08rem;">
+              <span class="fw-bold text-uppercase" style="font-size:.9rem;">
+                Bordereau d'Élimination — Demande d'Autorisation DAS
+              </span>
+            </div>
+
+            <div class="row g-2 mt-2 small">
+              <div class="col-sm-6">
+                <span class="text-muted">Service producteur :</span>
+                <strong class="ms-1">{{ be.service_producteur }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Archiviste :</span>
+                <strong class="ms-1">{{ be.cree_par.get_full_name|default:be.cree_par.username }}</strong>
+              </div>
+              {% if be.visa_das %}
+              <div class="col-sm-6">
+                <span class="text-muted">Visa DAS :</span>
+                <strong class="ms-1 text-success"><i class="bi bi-check-circle-fill me-1"></i>{{ be.reference_visa }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Date visa :</span>
+                <strong class="ms-1">{{ be.date_visa|date:"d/m/Y" }}</strong>
+              </div>
+              {% endif %}
+              <div class="col-12">
+                <span class="text-muted">Motif :</span>
+                <span class="ms-1 fst-italic">{{ be.motif }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table des documents -->
+          <h6 class="fw-semibold text-uppercase small text-muted mb-2">
+            <i class="bi bi-trash3 me-1 text-danger"></i>
+            Documents proposés à l'élimination
+            <span class="badge bg-danger rounded-pill ms-2">{{ docs.count }}</span>
+          </h6>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered table-hover mb-0 align-middle" style="font-size:.8rem;">
+              <thead style="background:#1a3a5c; color:#fff;">
+                <tr>
+                  <th class="text-center" style="width:36px;">#</th>
+                  <th>Référence</th><th>Titre</th><th>Catégorie</th><th>Localisation</th><th>DUA échue</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for doc in docs %}
+              <tr>
+                <td class="text-center text-muted fw-semibold">{{ forloop.counter }}</td>
+                <td class="font-monospace small text-muted">{{ doc.identifiant }}</td>
+                <td>
+                  <a href="{% url 'archives:document_detail' doc.pk %}" class="text-decoration-none">
+                    {{ doc.titre|truncatechars:50 }}
+                  </a>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ doc.categorie.code }}</span></td>
+                <td class="small text-muted">{{ doc.localisation_physique|default:"—" }}</td>
+                <td class="text-nowrap">
+                  {% if doc.date_fin_dua %}
+                  <span class="text-danger fw-bold">{{ doc.date_fin_dua|date:"d/m/Y" }}</span>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">Aucun document</td></tr>
+              {% endfor %}
+              </tbody>
+              <tfoot class="table-light small">
+                <tr>
+                  <td colspan="4" class="fw-semibold">Total : {{ docs.count }} document(s)</td>
+                  <td colspan="2" class="text-muted text-end">Loi 2006-19 — Sénégal</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Bloc signatures prévisionnels -->
+          <div class="row g-4 mt-1 small">
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">L'archiviste</div>
+                <div style="height:36px;"></div>
+                <div class="fw-semibold">{{ be.cree_par.get_full_name|default:be.cree_par.username }}</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">Visa DAS</div>
+                <div style="height:36px;"></div>
+                <div class="fw-semibold">Direction des Archives du Sénégal</div>
+                <div class="text-muted" style="font-size:.7rem;">Cachet &amp; Signature</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">Le Directeur ENSMG</div>
+                <div style="height:36px;"></div>
+                <div class="fw-semibold">Direction générale</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature &amp; Cachet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-top d-flex justify-content-between align-items-center py-2">
+          <span class="text-muted small">
+            <i class="bi bi-shield-check me-1 text-success"></i>
+            Conforme à la Loi n° 2006-19 — Demande de visa DAS
+          </span>
+          <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimer
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Colonne droite : workflow -->
+    <div class="col-lg-4">
+      <!-- Visa DAS obtenu -->
+      {% if be.visa_das %}
+      <div class="alert alert-success border-0 shadow-sm mb-3 d-flex gap-3 align-items-center">
+        <i class="bi bi-stamp fs-3 flex-shrink-0 text-success"></i>
+        <div class="small">
+          <div class="fw-semibold">Visa DAS obtenu</div>
+          <div>Référence : <strong>{{ be.reference_visa }}</strong></div>
+          <div class="text-muted">le {{ be.date_visa|date:"d/m/Y" }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Workflow -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-arrow-right-circle me-1"></i>Workflow DAS
+        </div>
+        <div class="card-body pt-2 pb-3">
+          <!-- Étapes -->
+          <div class="d-flex align-items-center justify-content-between mb-3" style="font-size:.72rem;">
+            <!-- Progression -->
+            <div class="text-center flex-fill">
+              <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center
+                {% if be.statut == 'BROUILLON' %}bg-secondary text-white
+                {% else %}bg-success text-white{% endif %}"
+                   style="width:26px;height:26px;">
+                <i class="bi bi-pencil" style="font-size:.55rem;"></i>
+              </div>
+              <div class="text-muted" style="font-size:.62rem; white-space:nowrap;">Brouillon</div>
+            </div>
+            <div class="flex-shrink-0 text-muted" style="font-size:.65rem;">›</div>
+            <div class="text-center flex-fill">
+              <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center
+                {% if be.statut == 'EN_VALIDATION' %}bg-warning text-dark
+                {% elif be.statut == 'VISA_OBTENU' or be.statut == 'EXECUTE' %}bg-success text-white
+                {% else %}bg-light text-muted border{% endif %}"
+                   style="width:26px;height:26px;">
+                <i class="bi bi-hourglass-split" style="font-size:.55rem;"></i>
+              </div>
+              <div class="text-muted" style="font-size:.62rem; white-space:nowrap;">Attente DAS</div>
+            </div>
+            <div class="flex-shrink-0 text-muted" style="font-size:.65rem;">›</div>
+            <div class="text-center flex-fill">
+              <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center
+                {% if be.statut == 'VISA_OBTENU' %}bg-info text-dark
+                {% elif be.statut == 'EXECUTE' %}bg-success text-white
+                {% else %}bg-light text-muted border{% endif %}"
+                   style="width:26px;height:26px;">
+                <i class="bi bi-stamp" style="font-size:.55rem;"></i>
+              </div>
+              <div class="text-muted" style="font-size:.62rem; white-space:nowrap;">Visa DAS</div>
+            </div>
+            <div class="flex-shrink-0 text-muted" style="font-size:.65rem;">›</div>
+            <div class="text-center flex-fill">
+              <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center
+                {% if be.statut == 'EXECUTE' %}bg-danger text-white{% else %}bg-light text-muted border{% endif %}"
+                   style="width:26px;height:26px;">
+                <i class="bi bi-trash3" style="font-size:.55rem;"></i>
+              </div>
+              <div class="text-muted" style="font-size:.62rem; white-space:nowrap;">Exécuté</div>
+            </div>
+          </div>
+
+          <!-- Statut courant -->
+          <div class="text-center mb-3">
+            {% if be.statut == 'BROUILLON' %}<span class="badge bg-secondary px-3 py-2">Brouillon</span>
+            {% elif be.statut == 'EN_VALIDATION' %}<span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-hourglass-split me-1"></i>Attente visa DAS</span>
+            {% elif be.statut == 'VISA_OBTENU' %}<span class="badge bg-info text-dark px-3 py-2"><i class="bi bi-stamp me-1"></i>Visa DAS obtenu</span>
+            {% elif be.statut == 'EXECUTE' %}<span class="badge bg-danger px-3 py-2"><i class="bi bi-trash3 me-1"></i>Élimination exécutée</span>
+            {% elif be.statut == 'REJETE' %}<span class="badge bg-dark px-3 py-2"><i class="bi bi-x-circle me-1"></i>Rejeté par la DAS</span>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <form method="post" class="d-grid gap-2">
+            {% csrf_token %}
+            {% if be.statut == 'BROUILLON' %}
+            <button type="submit" name="action" value="soumettre" class="btn btn-warning btn-sm">
+              <i class="bi bi-send me-1"></i>Soumettre à la DAS
+            </button>
+            {% elif be.statut == 'EN_VALIDATION' and est_admin %}
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Référence visa DAS <span class="text-danger">*</span></label>
+              <input type="text" name="reference_visa" class="form-control form-control-sm"
+                     placeholder="Ex : DAS/2026/VIS-0042" required>
+            </div>
+            <button type="submit" name="action" value="visa" class="btn btn-success btn-sm">
+              <i class="bi bi-check2-circle me-1"></i>Enregistrer le visa
+            </button>
+            <button type="submit" name="action" value="rejeter" class="btn btn-outline-dark btn-sm"
+                    onclick="return confirm('Rejeter ce bordereau ? Les documents reprendront leur statut précédent.')">
+              <i class="bi bi-x-circle me-1"></i>Rejeté par la DAS
+            </button>
+            {% elif be.statut == 'VISA_OBTENU' %}
+            <div class="alert alert-success py-2 small mb-1">
+              <i class="bi bi-check-circle-fill me-1"></i>Visa DAS : <strong>{{ be.reference_visa }}</strong>
+            </div>
+            <button type="submit" name="action" value="executer" class="btn btn-danger btn-sm"
+                    onclick="return confirm('⚠ ATTENTION — IRRÉVERSIBLE\n\nCette action va :\n• Détruire les fichiers physiques\n• Marquer les documents comme ÉLIMINÉS\n• Créer le constat de destruction\n\nConfirmer l\'élimination ?')">
+              <i class="bi bi-trash3 me-1"></i>Confirmer l'élimination
+            </button>
+            {% elif be.statut == 'EXECUTE' %}
+            <div class="text-center text-danger py-2">
+              <i class="bi bi-check-circle-fill fs-3 d-block mb-1"></i>
+              <p class="mb-0 small fw-semibold">Élimination exécutée</p>
+              <p class="mb-0 small text-muted">le {{ be.date_elimination|date:"d/m/Y" }}</p>
+            </div>
+            {% elif be.statut == 'REJETE' %}
+            <div class="text-center text-dark py-2">
+              <i class="bi bi-x-circle-fill fs-3 d-block mb-1"></i>
+              <p class="mb-0 small">Rejeté par la DAS</p>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+
+      <!-- Métadonnées -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-info-circle me-1"></i>Informations
+        </div>
+        <div class="card-body pb-2" style="font-size:.84rem;">
+          <dl class="row mb-0">
+            <dt class="col-sm-5 text-muted">Numéro</dt>
+            <dd class="col-sm-7 font-monospace small">{{ be.numero }}</dd>
+            <dt class="col-sm-5 text-muted">Service</dt>
+            <dd class="col-sm-7">{{ be.service_producteur }}</dd>
+            <dt class="col-sm-5 text-muted">Créé par</dt>
+            <dd class="col-sm-7">{{ be.cree_par.get_full_name|default:be.cree_par.username }}</dd>
+            <dt class="col-sm-5 text-muted">Date</dt>
+            <dd class="col-sm-7">{{ be.date_creation|date:"d/m/Y" }}</dd>
+            {% if be.visa_das %}
+            <dt class="col-sm-5 text-muted">Visa DAS</dt>
+            <dd class="col-sm-7 text-success fw-semibold">{{ be.reference_visa }}</dd>
+            <dt class="col-sm-5 text-muted">Date visa</dt>
+            <dd class="col-sm-7">{{ be.date_visa|date:"d/m/Y" }}</dd>
+            {% endif %}
+            {% if be.date_elimination %}
+            <dt class="col-sm-5 text-muted">Élimination</dt>
+            <dd class="col-sm-7 text-danger fw-semibold">{{ be.date_elimination|date:"d/m/Y" }}</dd>
+            {% endif %}
+            <dt class="col-sm-5 text-muted">Documents</dt>
+            <dd class="col-sm-7">
+              <span class="badge bg-danger rounded-pill">{{ be.nb_documents }}</span>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  .sidebar, .topbar, .col-lg-4, form[method=post], .breadcrumb, .card-footer .btn { display:none!important; }
+  .col-lg-8 { width:100%!important; flex:0 0 100%!important; max-width:100%!important; }
+  .container-fluid { padding:0!important; }
+  #constat-print, #bordereau-print { box-shadow:none!important; }
+}
+</style>
+{% endblock %}

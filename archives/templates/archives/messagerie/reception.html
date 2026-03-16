@@ -1,0 +1,76 @@
+{% extends "archives/base.html" %}
+{% block title %}Messagerie — Réception{% endblock %}
+{% block topbar_title %}Messagerie interne{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# Barre d'onglets #}
+  <ul class="nav nav-pills mb-3 gap-1">
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'archives:messagerie_reception' %}">
+        <i class="bi bi-inbox-fill me-1"></i>Réception
+        {% if nb_non_lus %}<span class="badge bg-danger ms-1">{{ nb_non_lus }}</span>{% endif %}
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'archives:messagerie_envoyes' %}"><i class="bi bi-send me-1"></i>Envoyés</a>
+    </li>
+    <li class="nav-item ms-auto">
+      <a class="nav-link btn btn-primary text-white" href="{% url 'archives:messagerie_nouveau' %}">
+        <i class="bi bi-pencil-square me-1"></i>Nouveau message
+      </a>
+    </li>
+  </ul>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      {% if receptions %}
+      <div class="list-group list-group-flush">
+        {% for r in receptions %}
+        <a href="{% url 'archives:messagerie_detail' r.message.pk %}"
+           class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3 px-4 {% if not r.lu %}fw-semibold bg-light{% endif %}">
+          {# Indicateur non lu #}
+          <span class="text-primary" style="font-size:0.5rem;">{% if not r.lu %}●{% else %} {% endif %}</span>
+
+          {# Avatar expéditeur #}
+          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width:36px;height:36px;font-size:0.8rem;">
+            {{ r.message.expediteur.first_name|first|upper }}{{ r.message.expediteur.last_name|first|upper }}
+          </div>
+
+          {# Contenu #}
+          <div class="flex-grow-1 min-w-0">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <span class="text-truncate me-2">{{ r.message.expediteur.get_full_name|default:r.message.expediteur.username }}</span>
+              <small class="text-muted text-nowrap">{{ r.message.date_envoi|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div class="text-truncate text-muted small">
+              <strong class="text-dark">{{ r.message.objet }}</strong>
+              — {{ r.message.corps|truncatechars:80 }}
+            </div>
+          </div>
+
+          {# Badges #}
+          <div class="d-flex gap-1 flex-shrink-0">
+            {% if r.message.piece_jointe %}<span class="badge bg-secondary"><i class="bi bi-paperclip"></i></span>{% endif %}
+            {% if r.message.nb_reponses %}<span class="badge bg-info text-dark"><i class="bi bi-reply-all"></i> {{ r.message.nb_reponses }}</span>{% endif %}
+            {% if r.message.document %}<span class="badge bg-success"><i class="bi bi-file-earmark"></i></span>{% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox" style="font-size:3rem;"></i>
+        <p class="mt-2">Votre boîte de réception est vide.</p>
+        <a href="{% url 'archives:messagerie_nouveau' %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-pencil-square me-1"></i>Envoyer un message
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

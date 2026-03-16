@@ -2,13 +2,19 @@
 {% block title %}Tableau de bord — Archives ENSMG{% endblock %}
 {% block topbar_title %}Tableau de bord{% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
 {% if est_gestionnaire %}
 <!-- ═══════════════════════════════════════════════════
      VUE ARCHIVISTE / ADMIN
 ════════════════════════════════════════════════════ -->
-<div class="row g-3 mb-4">
-  <div class="col-sm-6 col-xl-3">
+
+<!-- KPI Ligne 1 -->
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body d-flex align-items-center gap-3">
         <div class="rounded-circle p-3" style="background:rgba(26,82,118,.1)">
@@ -21,24 +27,26 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="rounded-circle p-3" style="background:rgba(255,193,7,.1)">
-          <i class="bi bi-inbox fs-4 text-warning"></i>
-        </div>
-        <div>
-          <div class="fs-2 fw-bold">{{ nb_depots_en_attente }}</div>
-          <div class="text-muted small">Dépôts en attente</div>
+  <div class="col-6 col-xl-3">
+    <a href="{% url 'archives:archiviste_depots' %}" class="text-decoration-none">
+      <div class="card border-0 shadow-sm h-100{% if nb_depots_en_attente %} border-warning border-start border-3{% endif %}">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="rounded-circle p-3" style="background:rgba(255,193,7,.1)">
+            <i class="bi bi-inbox-fill fs-4 text-warning"></i>
+          </div>
+          <div>
+            <div class="fs-2 fw-bold">{{ nb_depots_en_attente }}</div>
+            <div class="text-muted small">Dépôts en attente</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-6 col-xl-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body d-flex align-items-center gap-3">
         <div class="rounded-circle p-3" style="background:rgba(13,202,240,.1)">
-          <i class="bi bi-bookmarks fs-4 text-info"></i>
+          <i class="bi bi-bookmarks-fill fs-4 text-info"></i>
         </div>
         <div>
           <div class="fs-2 fw-bold">{{ nb_demandes_pret }}</div>
@@ -47,7 +55,7 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-6 col-xl-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body d-flex align-items-center gap-3">
         <div class="rounded-circle p-3" style="background:rgba(25,135,84,.1)">
@@ -57,6 +65,62 @@
           <div class="fs-2 fw-bold">{{ nb_prets_en_cours }}</div>
           <div class="text-muted small">Prêts en cours</div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alertes DUA (injectées en JS depuis l'API) -->
+<div id="dua-alerts-container" class="mb-3"></div>
+
+<!-- Charts + Actions rapides -->
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-pie-chart-fill me-2" style="color:#1a5276"></i>Répartition par phase</h6>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="chartPhases" style="max-height:200px"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-bar-chart-fill me-2 text-info"></i>Dépôts — 6 mois</h6>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="chartDepots" style="max-height:200px"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-lightning-fill me-2 text-warning"></i>Actions rapides</h6>
+      </div>
+      <div class="card-body d-flex flex-column gap-2">
+        <a href="{% url 'archives:archiviste_depots' %}" class="btn btn-sm btn-outline-primary text-start">
+          <i class="bi bi-inbox-fill me-2"></i>Traiter les dépôts en attente
+          {% if nb_depots_en_attente %}<span class="badge bg-warning text-dark ms-1">{{ nb_depots_en_attente }}</span>{% endif %}
+        </a>
+        <a href="{% url 'archives:admin_bordereaux_versement' %}" class="btn btn-sm btn-outline-secondary text-start">
+          <i class="bi bi-arrow-up-circle me-2"></i>Bordereaux de versement
+        </a>
+        <a href="{% url 'archives:admin_bordereaux_elimination' %}" class="btn btn-sm btn-outline-secondary text-start">
+          <i class="bi bi-trash3 me-2"></i>Bordereaux d'élimination
+        </a>
+        <a href="{% url 'archives:audit_tokens' %}" class="btn btn-sm btn-outline-info text-start">
+          <i class="bi bi-key me-2"></i>Créer un accès auditeur
+        </a>
+        <a href="{% url 'archives:admin_journal' %}" class="btn btn-sm btn-outline-secondary text-start">
+          <i class="bi bi-shield-lock me-2"></i>Journal d'audit
+        </a>
+        <hr class="my-1">
+        <small class="text-muted">
+          <i class="bi bi-terminal me-1"></i>Vérif. DUA : <code>python manage.py check_dua</code>
+        </small>
       </div>
     </div>
   </div>
@@ -412,5 +476,182 @@
 </div>
 {% endif %}
 
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if est_gestionnaire %}
+<script>
+/* ──────────────────────────────────────────────
+   Dashboard archiviste — Chart.js + DUA alerts
+────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+  /* ── Couleurs adaptatives ── */
+  const gridColor  = () => isDark() ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.08)';
+  const labelColor = () => isDark() ? '#adb5bd' : '#6c757d';
+
+  /* ── Chart 1 : Pie — Répartition par phase ── */
+  const ctxPhases = document.getElementById('chartPhases');
+  let chartPhases = null;
+  if (ctxPhases) {
+    chartPhases = new Chart(ctxPhases, {
+      type: 'doughnut',
+      data: {
+        labels: ['Active', 'Intermédiaire', 'Définitive', 'Éliminée'],
+        datasets: [{
+          data: [0, 0, 0, 0],
+          backgroundColor: ['#1a5276', '#17a589', '#f39c12', '#dc3545'],
+          borderWidth: 2,
+          borderColor: isDark() ? '#1e1e2e' : '#fff',
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: labelColor(), font: { size: 11 }, padding: 10 }
+          },
+          tooltip: { callbacks: {
+            label: ctx => ` ${ctx.label} : ${ctx.parsed} doc(s)`
+          }}
+        }
+      }
+    });
+  }
+
+  /* ── Chart 2 : Bar — Dépôts sur 6 mois ── */
+  const ctxDepots = document.getElementById('chartDepots');
+  let chartDepots = null;
+  if (ctxDepots) {
+    chartDepots = new Chart(ctxDepots, {
+      type: 'bar',
+      data: {
+        labels: ['', '', '', '', '', ''],
+        datasets: [{
+          label: 'Dépôts',
+          data: [0, 0, 0, 0, 0, 0],
+          backgroundColor: 'rgba(26,82,118,.7)',
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            title: ctx => ctx[0].label,
+            label: ctx => ` ${ctx.parsed.y} dépôt(s)`
+          }}
+        },
+        scales: {
+          x: { grid: { color: gridColor() }, ticks: { color: labelColor(), font: { size: 11 } } },
+          y: { grid: { color: gridColor() }, ticks: { color: labelColor(), stepSize: 1, font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  /* ── Chargement des données via l'API ── */
+  function loadStats() {
+    fetch("{% url 'archives:dashboard_stats_api' %}")
+      .then(r => r.json())
+      .then(data => {
+        /* -- Charts -- */
+        if (chartPhases && data.phases) {
+          chartPhases.data.datasets[0].data = [
+            data.phases.ACTIF   || 0,
+            data.phases.INTER   || 0,
+            data.phases.DEFINITIF || 0,
+            data.phases.ELIMINE || 0,
+          ];
+          chartPhases.data.datasets[0].borderColor = isDark() ? '#1e1e2e' : '#fff';
+          chartPhases.options.plugins.legend.labels.color = labelColor();
+          chartPhases.update('none');
+        }
+        if (chartDepots && data.depots_6mois) {
+          chartDepots.data.labels   = data.depots_6mois.map(d => d.mois);
+          chartDepots.data.datasets[0].data = data.depots_6mois.map(d => d.nb);
+          chartDepots.options.scales.x.grid.color  = gridColor();
+          chartDepots.options.scales.x.ticks.color = labelColor();
+          chartDepots.options.scales.y.grid.color  = gridColor();
+          chartDepots.options.scales.y.ticks.color = labelColor();
+          chartDepots.update('none');
+        }
+
+        /* -- Alertes DUA -- */
+        const container = document.getElementById('dua-alerts-container');
+        if (container) {
+          container.innerHTML = '';
+          const alerts = data.alertes_dua || [];
+          if (alerts.length === 0) return;
+
+          const panel = document.createElement('div');
+          panel.className = 'card border-0 shadow-sm border-start border-warning border-3';
+          panel.innerHTML = `
+            <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+              <span class="fw-semibold text-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Alertes DUA (${alerts.length})</span>
+              <button class="btn btn-sm btn-outline-secondary" onclick="this.closest('.card').remove()">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0 small align-middle">
+                  <thead class="table-light">
+                    <tr><th>Référence</th><th>Titre</th><th>DUA échue</th><th>Sort final</th></tr>
+                  </thead>
+                  <tbody id="dua-tbody"></tbody>
+                </table>
+              </div>
+            </div>`;
+          container.appendChild(panel);
+
+          const tbody = document.getElementById('dua-tbody');
+          alerts.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="font-monospace" style="font-size:.7rem">${a.identifiant || '—'}</td>
+              <td>${a.titre || '—'}</td>
+              <td class="text-danger fw-bold">${a.date_fin_dua || '—'}</td>
+              <td>
+                ${a.sort_final === 'CONSERVATION'
+                  ? '<span class="badge bg-info text-dark">Conservation</span>'
+                  : '<span class="badge bg-danger">Élimination</span>'}
+              </td>`;
+            tbody.appendChild(tr);
+          });
+        }
+      })
+      .catch(() => {
+        /* Silently fail — stats API non critique */
+      });
+  }
+
+  /* ── Re-colorisation au toggle dark mode ── */
+  const observer = new MutationObserver(() => {
+    if (chartPhases) {
+      chartPhases.data.datasets[0].borderColor = isDark() ? '#1e1e2e' : '#fff';
+      chartPhases.options.plugins.legend.labels.color = labelColor();
+      chartPhases.update('none');
+    }
+    if (chartDepots) {
+      chartDepots.options.scales.x.grid.color  = gridColor();
+      chartDepots.options.scales.x.ticks.color = labelColor();
+      chartDepots.options.scales.y.grid.color  = gridColor();
+      chartDepots.options.scales.y.ticks.color = labelColor();
+      chartDepots.update('none');
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  document.addEventListener('DOMContentLoaded', loadStats);
+})();
+</script>
 {% endif %}
 {% endblock %}

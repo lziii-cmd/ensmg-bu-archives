@@ -1,0 +1,99 @@
+{% extends "archives/base.html" %}
+{% block title %}Nouveau bordereau d'élimination — Courriers{% endblock %}
+{% block topbar_title %}Élimination des courriers{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+  <div class="row justify-content-center">
+    <div class="col-xl-9">
+      <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <small>Un <strong>visa de la DAS</strong> est obligatoire avant toute destruction. Ce bordereau sera soumis pour approbation.</small>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        {% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>{% endfor %}{% endif %}
+
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-info-circle me-1"></i>Informations
+          </div>
+          <div class="card-body pb-3">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Service producteur</label>
+                <input type="text" name="service_producteur" class="form-control" value="Secrétariat ENSMG" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Observations</label>
+                <input type="text" name="observations" class="form-control" placeholder="Optionnel">
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-semibold">Motif d'élimination <span class="text-danger">*</span></label>
+                <textarea name="motif" class="form-control" rows="3" required
+                  placeholder="Ex : DUA échue — Correspondances de routine sans valeur historique selon tableau de gestion approuvé."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-trash3 me-1"></i>Courriers à éliminer
+            <span class="ms-1 text-muted">(archivés, sort final Élimination)</span>
+          </div>
+          <div class="card-body p-0">
+            {% if courriers_eligibles %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="font-size:.86rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:42px;"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                    <th>Numéro</th><th>Objet</th><th>Date</th><th>Fin DUA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in courriers_eligibles %}
+                  <tr>
+                    <td><input type="checkbox" name="courriers" value="{{ c.pk }}" class="form-check-input courrier-cb"></td>
+                    <td>
+                      {% if c.sens == 'ARRIVEE' %}<span class="badge bg-primary"><i class="bi bi-arrow-down-left"></i></span>
+                      {% else %}<span class="badge bg-success"><i class="bi bi-arrow-up-right"></i></span>{% endif %}
+                      {{ c.numero_enregistrement }}
+                    </td>
+                    <td class="text-truncate" style="max-width:250px;">{{ c.objet }}</td>
+                    <td class="text-muted text-nowrap">{{ c.date_courrier|date:"d/m/Y" }}</td>
+                    <td class="text-muted text-nowrap {% if c.est_en_fin_de_dua %}text-danger fw-bold{% endif %}">
+                      {{ c.date_fin_dua|date:"d/m/Y"|default:"—" }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-check-circle" style="font-size:2rem;"></i>
+              <p class="mt-2 mb-0">Aucun courrier éligible à l'élimination.<br>
+              <small>Les courriers doivent être archivés, avec sort final Élimination, et DUA échue.</small></p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{% url 'archives:courrier_be_liste' %}" class="btn btn-outline-secondary">Annuler</a>
+          <button type="submit" class="btn btn-danger" {% if not courriers_eligibles %}disabled{% endif %}>
+            <i class="bi bi-save me-1"></i>Créer le bordereau
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('select-all')?.addEventListener('change', function() {
+    document.querySelectorAll('.courrier-cb').forEach(cb => cb.checked = this.checked);
+  });
+</script>
+{% endblock %}

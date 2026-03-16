@@ -1,0 +1,105 @@
+{% extends "archives/base.html" %}
+{% block title %}Bordereaux de versement — Archives ENSMG{% endblock %}
+{% block topbar_title %}Bordereaux de versement{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="mb-1 fw-bold">Bordereaux de versement</h5>
+      <p class="text-muted small mb-0">Transfert des archives définitives — Loi sénégalaise n° 2006-19 du 30 juin 2006</p>
+    </div>
+    <a href="{% url 'archives:admin_bordereau_versement_generer' %}" class="btn btn-primary">
+      <i class="bi bi-magic me-2"></i>Générer un bordereau
+    </a>
+  </div>
+
+  {% if services_en_attente %}
+  <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex gap-3 align-items-start">
+    <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 mt-1 text-warning"></i>
+    <div class="flex-grow-1">
+      <strong>{{ services_en_attente|length }} service(s) en attente de bordereau</strong>
+      <p class="mb-2 small text-muted">Les services suivants ont des dépôts archivés non encore couverts par un bordereau de versement :</p>
+      <div class="d-flex flex-wrap gap-2">
+        {% for service in services_en_attente %}
+        <a href="{% url 'archives:admin_bordereau_versement_generer' %}?service={{ service|urlencode }}&exercice={{ annee_courante }}"
+           class="btn btn-sm btn-outline-warning">
+          <i class="bi bi-building me-1"></i>{{ service }}
+          <span class="badge bg-warning text-dark ms-1"><i class="bi bi-arrow-right"></i></span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if bordereaux %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle" style="font-size:.88rem;">
+          <thead class="table-light">
+            <tr>
+              <th>Numéro</th>
+              <th>Service versant</th>
+              <th>Exercice</th>
+              <th>Dépôts</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for bv in bordereaux %}
+          <tr>
+            <td class="fw-semibold font-monospace small">{{ bv.numero }}</td>
+            <td>
+              <i class="bi bi-building text-muted me-1"></i>{{ bv.service_versant }}
+            </td>
+            <td>
+              {% if bv.exercice %}
+              <span class="badge bg-light text-dark border">{{ bv.exercice }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <span class="badge bg-primary rounded-pill">{{ bv.nb_documents }}</span>
+            </td>
+            <td class="text-muted small text-nowrap">{{ bv.date_creation|date:"d/m/Y" }}</td>
+            <td>
+              {% if bv.statut == 'BROUILLON' %}<span class="badge bg-secondary">Brouillon</span>
+              {% elif bv.statut == 'EN_VALIDATION' %}<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>En validation</span>
+              {% elif bv.statut == 'VALIDE' %}<span class="badge bg-info text-dark">Validé</span>
+              {% elif bv.statut == 'EXECUTE' %}<span class="badge bg-success"><i class="bi bi-check-all me-1"></i>Exécuté</span>
+              {% elif bv.statut == 'REJETE' %}<span class="badge bg-danger">Rejeté</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'archives:admin_bordereau_versement_detail' bv.pk %}"
+                 class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>Consulter
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-arrow-up-circle fs-1 text-muted opacity-50 d-block mb-3"></i>
+      <h6 class="text-muted">Aucun bordereau de versement</h6>
+      <p class="text-muted small mb-4">Les bordereaux de versement tracent le transfert chronologique des archives définitives vers le service d'archivage central.</p>
+      <a href="{% url 'archives:admin_bordereau_versement_generer' %}" class="btn btn-primary">
+        <i class="bi bi-magic me-2"></i>Générer le premier bordereau
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

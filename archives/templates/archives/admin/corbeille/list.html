@@ -1,0 +1,72 @@
+{% extends "archives/base.html" %}
+{% block title %}Corbeille — Archives ENSMG{% endblock %}
+{% block topbar_title %}Corbeille{% endblock %}
+
+{% block content %}
+{% include "archives/_breadcrumb.html" %}
+
+<div class="alert alert-warning border-0 shadow-sm mb-4 d-flex gap-3 align-items-start">
+  <i class="bi bi-clock-history fs-4 flex-shrink-0 mt-1"></i>
+  <div class="small">
+    Les documents en corbeille sont <strong>récupérables pendant 30 jours</strong> à compter de leur suppression.
+    Passé ce délai, ils seront définitivement purgés par le système (commande <code>check_dua</code>).
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h5 class="mb-0 fw-bold"><i class="bi bi-trash3 me-2 text-warning"></i>Corbeille de sécurité</h5>
+  <span class="badge bg-warning text-dark fs-6">{{ docs.count }} document(s)</span>
+</div>
+
+{% if docs %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Référence</th><th>Titre</th><th>Catégorie</th>
+            <th>Supprimé le</th><th>Purge dans</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for doc in docs %}
+        {% with jours_restants=doc.deleted_at|timesince %}
+        <tr>
+          <td class="font-monospace text-muted small">{{ doc.identifiant }}</td>
+          <td>
+            <span class="text-decoration-line-through text-muted">{{ doc.titre|truncatechars:45 }}</span>
+          </td>
+          <td><span class="badge bg-light text-dark border">{{ doc.categorie.code }}</span></td>
+          <td class="text-muted small">{{ doc.deleted_at|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% now "U" as now_ts %}
+            {% comment %}Calcul approximatif des jours restants{% endcomment %}
+            <span class="badge bg-warning text-dark">
+              <i class="bi bi-clock me-1"></i>{{ doc.deleted_at|timesince }}
+            </span>
+          </td>
+          <td>
+            <a href="{% url 'archives:corbeille_restaurer' doc.pk %}"
+               class="btn btn-sm btn-outline-success">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurer
+            </a>
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-trash3 fs-1 text-muted opacity-30 d-block mb-3"></i>
+    <h6 class="text-muted">La corbeille est vide</h6>
+    <p class="text-muted small mb-0">Les documents supprimés apparaissent ici avant leur purge définitive.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

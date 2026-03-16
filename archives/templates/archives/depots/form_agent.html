@@ -53,11 +53,44 @@
             <label for="{{ form.fichier.id_for_label }}" class="form-label fw-semibold">
               Fichier <span class="text-danger">*</span>
             </label>
-            <div class="border rounded p-3 bg-light text-center" id="drop-zone">
-              {{ form.fichier }}
-              <div class="text-muted small mt-2">
-                <i class="bi bi-cloud-arrow-up me-1"></i>
-                Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 50 Mo)
+            <!-- Zone drag & drop -->
+            <div id="drop-zone"
+                 class="border-2 border-dashed rounded-3 text-center p-4 position-relative"
+                 style="border: 2px dashed var(--border,#dee2e6); background: var(--body-bg,#f0f2f5); cursor: pointer; transition: border-color .2s, background .2s;"
+                 ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)"
+                 onclick="document.getElementById('{{ form.fichier.id_for_label }}').click()">
+
+              <!-- Input fichier caché -->
+              <div style="display:none">{{ form.fichier }}</div>
+
+              <!-- Affichage fichier sélectionné -->
+              <div id="dz-preview" style="display:none">
+                <div class="d-flex align-items-center gap-3 justify-content-center">
+                  <div class="rounded-circle p-2" style="background:rgba(26,82,118,.1)">
+                    <i class="bi bi-file-earmark-check fs-4" style="color:var(--theme-color,#1a5276)"></i>
+                  </div>
+                  <div class="text-start">
+                    <div class="fw-semibold small" id="dz-filename">—</div>
+                    <div class="text-muted" style="font-size:.75rem" id="dz-filesize">—</div>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                          onclick="event.stopPropagation();dzClear()"
+                          title="Retirer le fichier">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+                <!-- Barre de progression simulée -->
+                <div class="progress mt-3" style="height:4px;max-width:300px;margin:0 auto">
+                  <div id="dz-progress" class="progress-bar bg-success" style="width:0%;transition:width 1s ease"></div>
+                </div>
+              </div>
+
+              <!-- Placeholder (pas de fichier) -->
+              <div id="dz-placeholder">
+                <i class="bi bi-cloud-arrow-up fs-1 mb-2 d-block" style="color:var(--muted,#6c757d);opacity:.6"></i>
+                <div class="fw-semibold" style="font-size:.9rem">Glissez-déposez votre fichier ici</div>
+                <div class="text-muted small mt-1">ou <span style="color:var(--theme-color,#1a5276);text-decoration:underline">parcourir</span></div>
+                <div class="text-muted mt-2" style="font-size:.75rem">PDF · DOC · DOCX · XLS · XLSX · JPG · PNG — max 50 Mo</div>
               </div>
             </div>
             {% if form.fichier.errors %}
@@ -306,6 +339,57 @@
     });
   }
   {% endif %}
+
+  /* ── Drag & Drop ───────────────────────────────────────────── */
+  const fileInput = document.getElementById('{{ form.fichier.id_for_label }}');
+  const dz = document.getElementById('drop-zone');
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) dzShow(fileInput.files[0]);
+  });
+
+  function dzOver(e) {
+    e.preventDefault();
+    dz.style.borderColor = 'var(--theme-color, #1a5276)';
+    dz.style.background  = 'var(--theme-light, rgba(26,82,118,.08))';
+  }
+  function dzLeave(e) {
+    dz.style.borderColor = 'var(--border, #dee2e6)';
+    dz.style.background  = 'var(--body-bg, #f0f2f5)';
+  }
+  function dzDrop(e) {
+    e.preventDefault();
+    dzLeave(e);
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    const dt = new DataTransfer();
+    dt.items.add(f);
+    fileInput.files = dt.files;
+    dzShow(f);
+  }
+  function dzShow(f) {
+    document.getElementById('dz-placeholder').style.display = 'none';
+    document.getElementById('dz-preview').style.display = 'block';
+    document.getElementById('dz-filename').textContent = f.name;
+    const sz = f.size > 1048576 ? (f.size/1048576).toFixed(1)+' Mo' :
+               f.size > 1024    ? (f.size/1024).toFixed(1)+' Ko' :
+                                   f.size+' o';
+    document.getElementById('dz-filesize').textContent = sz;
+    // Animation barre de progression
+    const bar = document.getElementById('dz-progress');
+    bar.style.width = '0%';
+    setTimeout(() => bar.style.width = '100%', 50);
+    dz.style.borderColor = '#10b981';
+  }
+  function dzClear() {
+    fileInput.value = '';
+    document.getElementById('dz-placeholder').style.display = 'block';
+    document.getElementById('dz-preview').style.display = 'none';
+    dz.style.borderColor = 'var(--border, #dee2e6)';
+    document.getElementById('dz-progress').style.width = '0%';
+  }
+  window.dzOver = dzOver; window.dzLeave = dzLeave;
+  window.dzDrop = dzDrop; window.dzClear = dzClear;
 })();
 </script>
 {% endblock %}

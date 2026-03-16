@@ -1,0 +1,146 @@
+{% extends "archives/base.html" %}
+{% load archives_extras %}
+{% block title %}Nouveau token d'audit{% endblock %}
+{% block topbar_title %}Nouveau token d'accès auditeur{% endblock %}
+
+{% block content %}
+{% include "archives/_breadcrumb.html" %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-3 d-flex gap-3 align-items-start">
+        <div class="rounded-circle p-3 flex-shrink-0" style="background:rgba(13,202,240,.1)">
+          <i class="bi bi-key fs-4 text-info"></i>
+        </div>
+        <div>
+          <h5 class="mb-1 fw-bold">Token d'accès temporaire</h5>
+          <p class="text-muted small mb-0">
+            Génère un lien unique valable 1 à 30 jours, sans création de compte.
+            Idéal pour les inspections CAMES, audits MESRI ou commissaires aux comptes.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="mb-0 fw-semibold"><i class="bi bi-person-badge me-2"></i>Informations auditeur</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nom de l'auditeur / organisme <span class="text-danger">*</span></label>
+            <input type="text" name="auditeur_nom" class="form-control" placeholder="Ex: Conseil Africain et Malgache pour l'Enseignement Supérieur (CAMES)" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Email de contact</label>
+            <input type="email" name="auditeur_email" class="form-control" placeholder="auditeur@organisme.org">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Objet de la mission <span class="text-danger">*</span></label>
+            <input type="text" name="description" class="form-control" placeholder="Ex: Évaluation accréditation 2026 — Dossier pédagogique" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="mb-0 fw-semibold"><i class="bi bi-clock me-2"></i>Durée de validité</h6>
+        </div>
+        <div class="card-body">
+          <label class="form-label fw-semibold">Durée (jours) <span class="text-danger">*</span></label>
+          <div class="d-flex gap-2 flex-wrap">
+            {% for d, label in '1,24 heures|2,48 heures|3,3 jours|7,1 semaine|14,2 semaines|30,1 mois'|split_pipe %}{% endfor %}
+            <div class="btn-group" role="group">
+              {% for val, lbl in '1,1j|2,2j|3,3j|7,7j|14,14j|30,30j' %}{% endfor %}
+              <!-- Boutons de durée rapide -->
+              <input type="radio" class="btn-check" name="duree_jours" id="d1" value="1">
+              <label class="btn btn-outline-info btn-sm" for="d1">24h</label>
+              <input type="radio" class="btn-check" name="duree_jours" id="d2" value="2" checked>
+              <label class="btn btn-outline-info btn-sm" for="d2">48h</label>
+              <input type="radio" class="btn-check" name="duree_jours" id="d3" value="3">
+              <label class="btn btn-outline-info btn-sm" for="d3">3j</label>
+              <input type="radio" class="btn-check" name="duree_jours" id="d7" value="7">
+              <label class="btn btn-outline-info btn-sm" for="d7">7j</label>
+              <input type="radio" class="btn-check" name="duree_jours" id="d14" value="14">
+              <label class="btn btn-outline-info btn-sm" for="d14">14j</label>
+              <input type="radio" class="btn-check" name="duree_jours" id="d30" value="30">
+              <label class="btn btn-outline-info btn-sm" for="d30">30j</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="mb-0 fw-semibold"><i class="bi bi-shield me-2"></i>Périmètre d'accès</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Périmètre</label>
+            <select name="perimetre" class="form-select" id="select-perimetre" onchange="updatePerimetre(this.value)">
+              <option value="TOUS">Tous les documents (selon niveau de confidentialité)</option>
+              <option value="CATEGORIE">Par catégorie documentaire</option>
+              <option value="PLAN">Par plan de classement</option>
+            </select>
+          </div>
+
+          <div id="section-categories" style="display:none">
+            <label class="form-label fw-semibold">Catégories autorisées</label>
+            <div class="row g-2">
+              {% for cat in categories %}
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="categories" value="{{ cat.pk }}" id="cat_{{ cat.pk }}">
+                  <label class="form-check-label small" for="cat_{{ cat.pk }}">{{ cat }}</label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div id="section-plans" style="display:none">
+            <label class="form-label fw-semibold">Plans de classement autorisés</label>
+            <div class="row g-2">
+              {% for plan in plans %}
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="plans" value="{{ plan.pk }}" id="plan_{{ plan.pk }}">
+                  <label class="form-check-label small" for="plan_{{ plan.pk }}">{{ plan }}</label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label fw-semibold">Niveau de confidentialité maximum accessible</label>
+            <select name="confidentialite_max" class="form-select">
+              <option value="INTERNE">Usage interne (exclut Confidentiel et Secret)</option>
+              <option value="CONFIDENTIEL">Confidentiel (exclut Secret)</option>
+              <option value="SECRET">Secret (accès complet)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'archives:audit_tokens' %}" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-info text-white">
+          <i class="bi bi-key me-2"></i>Générer le token
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function updatePerimetre(val) {
+  document.getElementById('section-categories').style.display = val === 'CATEGORIE' ? 'block' : 'none';
+  document.getElementById('section-plans').style.display = val === 'PLAN' ? 'block' : 'none';
+}
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends "archives/base.html" %}
+{% block title %}Générer un bordereau de versement{% endblock %}
+{% block topbar_title %}Génération — Bordereau de versement{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+
+  <div class="row g-4">
+    <!-- Colonne gauche : formulaire de sélection -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-primary text-white py-3">
+          <h6 class="mb-0 fw-semibold"><i class="bi bi-magic me-2"></i>Paramètres de génération</h6>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info border-0 py-2 mb-3 small">
+            <i class="bi bi-info-circle me-1"></i>
+            Le système regroupe automatiquement tous les dépôts archivés d'un service sur l'exercice sélectionné.
+          </div>
+          <form method="post" id="form-apercu">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Service <span class="text-danger">*</span></label>
+              <select name="service" class="form-select" required>
+                <option value="">— Sélectionner un service —</option>
+                {% for s in services_dispo %}
+                <option value="{{ s.agent__departement__nom }}"
+                  {% if service_nom == s.agent__departement__nom %}selected{% endif %}>
+                  {{ s.agent__departement__nom }}
+                  <span class="text-muted">({{ s.nb }} dépôts)</span>
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Exercice <span class="text-danger">*</span></label>
+              <select name="exercice" class="form-select">
+                {% for ex in exercices_dispo %}
+                <option value="{{ ex }}" {% if exercice == ex %}selected{% elif not exercice and ex == annee_courante %}selected{% endif %}>
+                  {{ ex }}{% if ex == annee_courante %} (en cours){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Observations</label>
+              <textarea name="observations" class="form-control" rows="3"
+                        placeholder="Contexte, conditions particulières…">{{ observations|default:'' }}</textarea>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" name="action" value="apercu" class="btn btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>Prévisualiser
+              </button>
+              {% if apercu %}
+              <button type="submit" name="action" value="generer"
+                      class="btn btn-primary {% if not apercu %}disabled{% endif %}"
+                      onclick="return confirm('Créer le bordereau de versement pour {{ service_nom }} — {{ exercice }} ?\nCette action est définitive.')">
+                <i class="bi bi-check2-circle me-1"></i>Générer le bordereau
+              </button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {% if bv_existant %}
+      <div class="alert alert-warning border-0 shadow-sm small">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        Un bordereau existe déjà pour ce service / exercice :
+        <a href="{% url 'archives:admin_bordereau_versement_detail' bv_existant.pk %}" class="fw-semibold">
+          {{ bv_existant.numero }}
+        </a> ({{ bv_existant.get_statut_display }})
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Colonne droite : aperçu institutionnel -->
+    <div class="col-lg-8">
+      {% if apercu is None %}
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="bi bi-file-earmark-text fs-1 d-block mb-3 opacity-25"></i>
+          <p class="mb-0">Sélectionnez un service et un exercice,<br>puis cliquez sur <strong>Prévisualiser</strong>.</p>
+        </div>
+      </div>
+
+      {% elif apercu|length == 0 %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="bi bi-inbox fs-1 d-block mb-3 text-warning opacity-75"></i>
+          <h6>Aucun dépôt éligible</h6>
+          <p class="small mb-0">Aucun dépôt archivé trouvé pour <strong>{{ service_nom }}</strong> en <strong>{{ exercice }}</strong> non encore versé.</p>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Aperçu du bordereau (format institutionnel) -->
+      <div class="card border-0 shadow-sm" id="apercu-bv">
+        <!-- En-tête institutionnelle -->
+        <div class="card-body pb-0">
+          <div class="border rounded-2 p-3 mb-3" style="background:#f8f9fc;">
+            <div class="row align-items-center mb-3">
+              <div class="col-md-8">
+                <div class="text-center text-uppercase fw-bold" style="font-size:.8rem; letter-spacing:.05rem; color:#555;">
+                  République du Sénégal
+                </div>
+                <div class="text-center text-muted small" style="font-size:.72rem;">
+                  Ministère des Mines et de la Géologie
+                </div>
+                <hr class="my-1" style="border-color:#ccc;">
+                <div class="text-center fw-bold" style="font-size:.95rem; color:#1a3a5c;">
+                  École Nationale Supérieure des Mines et de la Géologie
+                </div>
+                <div class="text-center text-muted small" style="font-size:.72rem;">
+                  ENSMG — Dakar, Sénégal
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="border rounded p-2 d-inline-block" style="background:#fff; min-width:140px;">
+                  <div class="text-muted" style="font-size:.65rem; letter-spacing:.05rem; text-transform:uppercase;">N° Bordereau</div>
+                  <div class="fw-bold font-monospace" style="font-size:.82rem;">BV-{{ service_nom|slice:":6"|upper }}-{{ exercice }}-XXXX</div>
+                  <div class="text-muted" style="font-size:.65rem;">Date : {% now "d/m/Y" %}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center py-2 border-top border-bottom mb-3" style="background:#1a3a5c; color:#fff; border-radius:4px;">
+              <span class="fw-bold" style="letter-spacing:.08rem; font-size:.92rem; text-transform:uppercase;">
+                Bordereau de Versement d'Archives
+              </span>
+            </div>
+
+            <div class="row g-2 small mb-2">
+              <div class="col-sm-6">
+                <span class="text-muted">Service versant :</span>
+                <strong class="ms-1">{{ service_nom }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Service destinataire :</span>
+                <strong class="ms-1">Service des Archives — ENSMG</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Exercice :</span>
+                <strong class="ms-1">{{ exercice }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Nombre de dépôts :</span>
+                <strong class="ms-1">{{ apercu|length }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table chronologique des dépôts -->
+          <h6 class="fw-semibold small text-uppercase text-muted mb-2">
+            <i class="bi bi-list-ol me-1"></i>Inventaire chronologique des dépôts
+          </h6>
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered table-hover mb-0 align-middle" style="font-size:.8rem;">
+              <thead style="background:#1a3a5c; color:#fff;">
+                <tr>
+                  <th class="text-center" style="width:36px;">#</th>
+                  <th>Localisation</th>
+                  <th>Code / Référence</th>
+                  <th>Titre du document</th>
+                  <th>Agent versant</th>
+                  <th class="text-nowrap">Date dépôt</th>
+                  <th>Catégorie</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for depot in apercu %}
+              <tr>
+                <td class="text-center text-muted fw-semibold">{{ forloop.counter }}</td>
+                <td class="font-monospace small text-muted">
+                  {% if depot.document_archive.localisation_physique %}
+                    {{ depot.document_archive.localisation_physique }}
+                  {% else %}
+                    <span class="text-muted fst-italic">—</span>
+                  {% endif %}
+                </td>
+                <td class="font-monospace small">
+                  {% if depot.document_archive %}
+                    {{ depot.document_archive.identifiant }}
+                  {% else %}
+                    <span class="text-muted">DEP-{{ depot.pk }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if depot.document_archive %}
+                    {{ depot.document_archive.titre|truncatechars:55 }}
+                  {% else %}
+                    {{ depot.titre_document|default:depot.description|truncatechars:55 }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if depot.agent %}
+                    {{ depot.agent.get_full_name|default:depot.agent.username }}
+                  {% else %}—{% endif %}
+                </td>
+                <td class="text-nowrap">{{ depot.date_depot|date:"d/m/Y" }}</td>
+                <td>
+                  {% if depot.categorie %}
+                    <span class="badge bg-light text-dark border">{{ depot.categorie.code }}</span>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="4" class="fw-semibold small">Total : {{ apercu|length }} dépôt(s)</td>
+                  <td colspan="3" class="text-muted small text-end">Exercice {{ exercice }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Bloc signatures -->
+          <div class="row g-3 mt-2 mb-3 small">
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-2">
+                <div class="text-muted mb-1">L'archiviste</div>
+                <div style="height:40px;"></div>
+                <div class="fw-semibold">Signature &amp; Cachet</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-2">
+                <div class="text-muted mb-1">Le Chef de service versant</div>
+                <div style="height:40px;"></div>
+                <div class="fw-semibold">Signature &amp; Cachet</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-2">
+                <div class="text-muted mb-1">Le Directeur ENSMG</div>
+                <div style="height:40px;"></div>
+                <div class="fw-semibold">Signature &amp; Cachet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-top d-flex justify-content-between align-items-center py-2">
+          <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>Aperçu — le numéro définitif sera attribué à la génération</span>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="service" value="{{ service_nom }}">
+            <input type="hidden" name="exercice" value="{{ exercice }}">
+            <input type="hidden" name="observations" value="{{ observations|default:'' }}">
+            <button type="submit" name="action" value="generer" class="btn btn-primary btn-sm"
+                    onclick="return confirm('Générer le bordereau de versement pour {{ service_nom }} — {{ exercice }} ?')">
+              <i class="bi bi-check2-circle me-1"></i>Confirmer et générer
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

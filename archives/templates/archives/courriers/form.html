@@ -1,0 +1,269 @@
+{% extends "archives/base.html" %}
+{% block title %}{% if mode == 'edition' %}Modifier — {{ courrier.numero_enregistrement }}{% else %}Enregistrer un courrier{% endif %}{% endblock %}
+{% block topbar_title %}{% if mode == 'edition' %}Modification du courrier{% else %}Nouveau courrier{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+
+  <div class="row justify-content-center">
+    <div class="col-xl-9 col-lg-11">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        {% if errors %}
+        <div class="alert alert-danger py-2 mb-3">
+          <strong>Veuillez corriger les erreurs suivantes :</strong>
+          <ul class="mb-0 mt-1">{% for field, msg in errors.items %}<li>{{ msg }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        {# ─── Sens ──────────────────────────────────────────────────────────── #}
+        {% if mode == 'creation' %}
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-arrow-left-right me-1"></i>Sens du courrier *
+          </div>
+          <div class="card-body py-3">
+            <div class="d-flex gap-3 flex-wrap">
+              <div class="form-check form-check-inline flex-grow-1">
+                <input class="form-check-input" type="radio" name="sens" id="sens_arr" value="ARRIVEE"
+                       {% if data.sens == 'ARRIVEE' or not data %}checked{% endif %} required>
+                <label class="form-check-label fw-semibold" for="sens_arr">
+                  <i class="bi bi-arrow-down-left text-primary me-1"></i>Courrier Arrivée
+                  <small class="d-block fw-normal text-muted">Courrier reçu de l'extérieur</small>
+                </label>
+              </div>
+              <div class="form-check form-check-inline flex-grow-1">
+                <input class="form-check-input" type="radio" name="sens" id="sens_dep" value="DEPART"
+                       {% if data.sens == 'DEPART' %}checked{% endif %} required>
+                <label class="form-check-label fw-semibold" for="sens_dep">
+                  <i class="bi bi-arrow-up-right text-success me-1"></i>Courrier Départ
+                  <small class="d-block fw-normal text-muted">Courrier émis par l'ENSMG</small>
+                </label>
+              </div>
+            </div>
+            {% if errors.sens %}<div class="text-danger small mt-1">{{ errors.sens }}</div>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        {# ─── Identification ──────────────────────────────────────────────── #}
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-file-earmark-text me-1"></i>Identification
+          </div>
+          <div class="card-body pb-3">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Objet <span class="text-danger">*</span></label>
+              <input type="text" name="objet" class="form-control {% if errors.objet %}is-invalid{% endif %}"
+                     value="{{ data.objet|default:courrier.objet|default:'' }}"
+                     placeholder="Objet complet du courrier" required maxlength="500">
+              {% if errors.objet %}<div class="invalid-feedback">{{ errors.objet }}</div>{% endif %}
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Date du courrier <span class="text-danger">*</span></label>
+                <input type="date" name="date_courrier" class="form-control {% if errors.date_courrier %}is-invalid{% endif %}"
+                       value="{{ data.date_courrier|default:courrier.date_courrier|date:'Y-m-d'|default:'' }}" required>
+                {% if errors.date_courrier %}<div class="invalid-feedback">{{ errors.date_courrier }}</div>{% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Référence expéditeur</label>
+                <input type="text" name="reference_expediteur" class="form-control"
+                       value="{{ data.reference_expediteur|default:courrier.reference_expediteur|default:'' }}"
+                       placeholder="Réf. figurant sur le document original" maxlength="100">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Confidentialité</label>
+                <select name="confidentialite" class="form-select">
+                  {% for val, label in CONFIDENTIALITES %}
+                  <option value="{{ val }}"
+                    {% if data.confidentialite == val or courrier.confidentialite == val %}selected{% elif not data and not courrier and val == 'INTERNE' %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# ─── Expéditeur / Destinataire ──────────────────────────────────── #}
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-people me-1"></i>Expéditeur & destinataire
+          </div>
+          <div class="card-body pb-3">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Expéditeur <span class="text-danger">*</span></label>
+                <input type="text" name="expediteur" class="form-control {% if errors.expediteur %}is-invalid{% endif %}"
+                       value="{{ data.expediteur|default:courrier.expediteur|default:'' }}"
+                       placeholder="Nom de l'expéditeur ou de l'organisme" required>
+                {% if errors.expediteur %}<div class="invalid-feedback">{{ errors.expediteur }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Destinataire <span class="text-danger">*</span></label>
+                <input type="text" name="destinataire" class="form-control {% if errors.destinataire %}is-invalid{% endif %}"
+                       value="{{ data.destinataire|default:courrier.destinataire|default:'' }}"
+                       placeholder="Nom du destinataire" required>
+                {% if errors.destinataire %}<div class="invalid-feedback">{{ errors.destinataire }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Service interne concerné</label>
+                <input type="text" name="service_interne" class="form-control"
+                       value="{{ data.service_interne|default:courrier.service_interne|default:'' }}"
+                       placeholder="Ex : Scolarité, DAF, DRH…">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Ampliation <small class="text-muted">(copie à)</small></label>
+                <input type="text" name="ampliation" class="form-control"
+                       value="{{ data.ampliation|default:courrier.ampliation|default:'' }}"
+                       placeholder="Services mis en copie, séparés par des virgules">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# ─── Arrivée : délai + accusé ──────────────────────────────────── #}
+        <div class="card shadow-sm border-0 mb-3" id="block-arrivee"
+             {% if mode == 'edition' and courrier.sens == 'DEPART' %}style="display:none;"{% endif %}>
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-calendar-check me-1"></i>Traitement (Arrivée)
+          </div>
+          <div class="card-body pb-3">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Délai de réponse</label>
+                <input type="date" name="delai_reponse" class="form-control {% if errors.delai_reponse %}is-invalid{% endif %}"
+                       value="{{ data.delai_reponse|default:courrier.delai_reponse|date:'Y-m-d'|default:'' }}">
+                {% if errors.delai_reponse %}<div class="invalid-feedback">{{ errors.delai_reponse }}</div>{% endif %}
+              </div>
+              <div class="col-md-8 d-flex align-items-end">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="accuse_reception" id="accuse_reception"
+                         {% if data.accuse_reception or courrier.accuse_reception %}checked{% endif %}>
+                  <label class="form-check-label small" for="accuse_reception">Accusé de réception envoyé</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# ─── Départ : lien réponse ─────────────────────────────────────── #}
+        <div class="card shadow-sm border-0 mb-3" id="block-depart"
+             {% if mode == 'creation' or courrier.sens == 'ARRIVEE' %}style="display:none;"{% endif %}>
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-reply me-1"></i>Liaison (Départ)
+          </div>
+          <div class="card-body pb-3">
+            <label class="form-label small fw-semibold">En réponse au courrier arrivée <small class="text-muted">(optionnel)</small></label>
+            <select name="en_reponse_a" class="form-select">
+              <option value="">— Aucun —</option>
+              {% for ca in courriers_arrivee %}
+              <option value="{{ ca.pk }}"
+                {% if data.en_reponse_a == ca.pk|stringformat:"s" or courrier.en_reponse_a_id == ca.pk %}selected{% endif %}>
+                {{ ca.numero_enregistrement }} — {{ ca.objet|truncatechars:70 }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        {# ─── Description / Instructions ─────────────────────────────────── #}
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-card-text me-1"></i>Contenu & instructions
+          </div>
+          <div class="card-body pb-3">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Résumé / Description</label>
+              <textarea name="description" class="form-control" rows="3"
+                        placeholder="Résumé du contenu du courrier">{{ data.description|default:courrier.description|default:'' }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Instructions de traitement</label>
+              <textarea name="instructions" class="form-control" rows="2"
+                        placeholder="Instructions à destination du service concerné">{{ data.instructions|default:courrier.instructions|default:'' }}</textarea>
+            </div>
+            <div>
+              <label class="form-label small fw-semibold">Mots-clés</label>
+              <input type="text" name="mots_cles" class="form-control"
+                     value="{{ data.mots_cles|default:courrier.mots_cles|default:'' }}"
+                     placeholder="Séparés par des virgules">
+            </div>
+          </div>
+        </div>
+
+        {# ─── Fichier + DUA ──────────────────────────────────────────────── #}
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-paperclip me-1"></i>Fichier & archivage
+          </div>
+          <div class="card-body pb-3">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Fichier numérique (scan)</label>
+                {% if mode == 'edition' and courrier.fichier %}
+                <div class="mb-1 text-muted small">
+                  <i class="bi bi-paperclip me-1"></i>Fichier actuel : {{ courrier.nom_fichier_original|default:"Fichier joint" }}
+                </div>
+                {% endif %}
+                <input type="file" name="fichier" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.tiff">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Tableau de gestion (DUA)</label>
+                <select name="tableau_gestion" class="form-select">
+                  <option value="">— Non renseigné —</option>
+                  {% for tdg in tdgs %}
+                  <option value="{{ tdg.pk }}"
+                    {% if data.tableau_gestion == tdg.pk|stringformat:"s" or courrier.tableau_gestion_id == tdg.pk %}selected{% endif %}>
+                    {{ tdg }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# ─── Boutons ────────────────────────────────────────────────────── #}
+        <div class="d-flex justify-content-end gap-2">
+          {% if mode == 'edition' %}
+          <a href="{% url 'archives:courrier_detail' courrier.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg me-1"></i>Annuler
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-floppy me-1"></i>Enregistrer les modifications
+          </button>
+          {% else %}
+          <a href="{% url 'archives:courrier_liste' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg me-1"></i>Annuler
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i>Enregistrer le courrier
+          </button>
+          {% endif %}
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Affichage dynamique des blocs Arrivée / Départ (mode création)
+  const sensRadios = document.querySelectorAll('input[name="sens"]');
+  const blkArr     = document.getElementById('block-arrivee');
+  const blkDep     = document.getElementById('block-depart');
+
+  function toggleSens() {
+    const val = document.querySelector('input[name="sens"]:checked')?.value;
+    if (blkArr) blkArr.style.display = (val === 'ARRIVEE' || !val) ? '' : 'none';
+    if (blkDep) blkDep.style.display = (val === 'DEPART')          ? '' : 'none';
+  }
+  sensRadios.forEach(r => r.addEventListener('change', toggleSens));
+  toggleSens();
+</script>
+{% endblock %}

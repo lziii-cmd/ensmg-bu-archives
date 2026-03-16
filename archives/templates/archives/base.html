@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,96 +7,168 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
+    /* ═══ VARIABLES Light / Dark ═══ */
     :root {
-      --sidebar-width: 260px;
       --theme-color: {% if theme == 'archiviste' %}#1a5276{% else %}#5b2f8a{% endif %};
+      --theme-light: {% if theme == 'archiviste' %}rgba(26,82,118,.08){% else %}rgba(91,47,138,.08){% endif %};
+      --sidebar-width: 262px;
+      --body-bg:    #f0f2f5;
+      --card-bg:    #ffffff;
+      --topbar-bg:  #ffffff;
+      --input-bg:   #ffffff;
+      --text-color: #212529;
+      --muted:      #6c757d;
+      --border:     #dee2e6;
     }
-    body { background: #f4f6f9; }
+    [data-theme="dark"] {
+      --body-bg:   #0f1117;
+      --card-bg:   #1a1d27;
+      --topbar-bg: #1a1d27;
+      --input-bg:  #252836;
+      --text-color:#e2e8f0;
+      --muted:     #9ca3af;
+      --border:    #2d3142;
+    }
+    body { background: var(--body-bg); color: var(--text-color); transition: background .25s, color .25s; }
+    .card { background: var(--card-bg) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .card { box-shadow: 0 1px 4px rgba(0,0,0,.5) !important; }
+    [data-theme="dark"] .table { color: var(--text-color); }
+    [data-theme="dark"] .table-light { background: #252836; color: var(--text-color); }
+    [data-theme="dark"] .table-hover tbody tr:hover td { background: rgba(255,255,255,.03); }
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select { background: var(--input-bg); border-color: var(--border); color: var(--text-color); }
+    [data-theme="dark"] .form-control::placeholder { color: var(--muted); }
+    [data-theme="dark"] .dropdown-menu { background: var(--card-bg); border-color: var(--border); }
+    [data-theme="dark"] .dropdown-item { color: var(--text-color); }
+    [data-theme="dark"] .dropdown-item:hover { background: var(--input-bg); }
+    [data-theme="dark"] .modal-content { background: var(--card-bg); border-color: var(--border); }
+    [data-theme="dark"] .modal-header,
+    [data-theme="dark"] .modal-footer { border-color: var(--border); }
+    [data-theme="dark"] .text-muted { color: var(--muted) !important; }
+    [data-theme="dark"] .bg-white { background: var(--card-bg) !important; }
+    [data-theme="dark"] .bg-light { background: #252836 !important; color: var(--text-color) !important; }
+    [data-theme="dark"] .border-bottom, [data-theme="dark"] .border-top { border-color: var(--border) !important; }
+    [data-theme="dark"] .alert-warning { background:#451a03; color:#fcd34d; border-color:#92400e; }
+    [data-theme="dark"] .alert-danger  { background:#450a0a; color:#fca5a5; border-color:#7f1d1d; }
+    [data-theme="dark"] .alert-info    { background:#1e3a8a; color:#bfdbfe; border-color:#1d4ed8; }
+    [data-theme="dark"] .alert-success { background:#064e3b; color:#a7f3d0; border-color:#065f46; }
+    [data-theme="dark"] .badge.bg-light { background:#3a3f55 !important; color:#e2e8f0 !important; }
+    [data-theme="dark"] .breadcrumb-item a { color: var(--theme-color); }
+    [data-theme="dark"] #topbar { background: var(--topbar-bg); border-color: var(--border); }
+    [data-theme="dark"] input.form-control.bg-light { background: var(--input-bg) !important; }
 
-    /* ── Sidebar ── */
+    /* ═══ SIDEBAR ═══ */
     #sidebar {
-      width: var(--sidebar-width);
-      min-height: 100vh;
+      width: var(--sidebar-width); min-height: 100vh;
       position: fixed; top: 0; left: 0;
-      display: flex; flex-direction: column; z-index: 100;
+      display: flex; flex-direction: column; z-index: 1050;
       background: var(--theme-color);
+      transition: transform .25s ease;
     }
     #sidebar .brand {
-      padding: 1.2rem 1rem;
-      border-bottom: 1px solid rgba(255,255,255,.15);
-      color: #fff; font-size: 1rem; font-weight: 700;
+      padding: 1rem; border-bottom: 1px solid rgba(255,255,255,.15);
+      color: #fff; font-size: .92rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between;
     }
     #sidebar .nav-link {
-      color: rgba(255,255,255,.82); padding: .5rem 1.1rem;
-      border-radius: 6px; margin: 1px 8px; font-size: .875rem;
-      transition: background .15s;
+      color: rgba(255,255,255,.8); padding: .42rem 1rem;
+      border-radius: 7px; margin: 1px 8px; font-size: .82rem;
+      transition: background .15s; display: flex; align-items: center;
     }
     #sidebar .nav-link:hover, #sidebar .nav-link.active {
       background: rgba(255,255,255,.16); color: #fff;
     }
-    #sidebar .nav-link i { margin-right: 8px; }
+    #sidebar .nav-link i { width: 20px; margin-right: 8px; font-size: .93rem; }
     #sidebar .nav-section {
-      font-size: .68rem; text-transform: uppercase;
-      color: rgba(255,255,255,.42);
-      padding: .7rem 1.2rem .2rem; letter-spacing: 1px;
+      font-size: .63rem; text-transform: uppercase; letter-spacing: 1.5px;
+      color: rgba(255,255,255,.36); padding: .6rem 1.2rem .1rem;
     }
+    #sidebar .badge-sb { margin-left: auto; font-size: .6rem; }
+
+    /* ═══ MAIN ═══ */
     #main-content { margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; }
     #topbar {
-      background: #fff; border-bottom: 1px solid #dee2e6;
-      padding: .7rem 1.5rem;
+      background: var(--topbar-bg); border-bottom: 1px solid var(--border);
+      padding: .6rem 1.5rem;
       display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 50;
+      position: sticky; top: 0; z-index: 100;
     }
     .page-body { padding: 1.5rem; flex: 1; }
 
-    /* ── Notifications dropdown (style réseau social) ── */
-    .notif-dropdown { width: 380px; max-height: 480px; overflow-y: auto; border-radius: 10px; }
+    /* ═══ TOASTS ═══ */
+    #toast-container {
+      position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+      display: flex; flex-direction: column; gap: .5rem; pointer-events: none;
+    }
+    .toast-x {
+      pointer-events: all; min-width: 290px; max-width: 420px;
+      padding: .7rem 1rem; border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18);
+      display: flex; align-items: flex-start; gap: .75rem;
+      animation: txIn .3s ease; border-left: 4px solid transparent;
+    }
+    .toast-x.s { background:#d1fae5; border-color:#10b981; color:#065f46; }
+    .toast-x.e { background:#fee2e2; border-color:#ef4444; color:#7f1d1d; }
+    .toast-x.w { background:#fef3c7; border-color:#f59e0b; color:#78350f; }
+    .toast-x.i { background:#dbeafe; border-color:#3b82f6; color:#1e3a8a; }
+    [data-theme="dark"] .toast-x.s { background:#064e3b; color:#a7f3d0; }
+    [data-theme="dark"] .toast-x.e { background:#450a0a; color:#fca5a5; }
+    [data-theme="dark"] .toast-x.w { background:#451a03; color:#fcd34d; }
+    [data-theme="dark"] .toast-x.i { background:#1e3a8a; color:#bfdbfe; }
+    @keyframes txIn  { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes txOut { from{opacity:1} to{opacity:0;transform:translateX(30px)} }
+
+    /* ═══ NOTIFICATIONS ═══ */
+    .notif-dropdown { width:380px; max-height:480px; overflow-y:auto; border-radius:10px; background:var(--card-bg); }
     .notif-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 10px 14px; border-bottom: 1px solid #f1f3f5;
-      text-decoration: none; color: inherit;
-      transition: background .12s;
+      display:flex; align-items:flex-start; gap:10px; padding:10px 14px;
+      border-bottom:1px solid var(--border); text-decoration:none; color:var(--text-color); transition:background .12s;
     }
-    .notif-item:hover { background: #f8f9fa; }
-    .notif-item.non-lue { background: {% if theme == 'archiviste' %}rgba(26,82,118,.05){% else %}rgba(91,47,138,.05){% endif %}; }
-    .notif-item.non-lue:hover { background: {% if theme == 'archiviste' %}rgba(26,82,118,.1){% else %}rgba(91,47,138,.1){% endif %}; }
-    .notif-icon {
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; font-size: .9rem;
+    .notif-item:hover { background:var(--body-bg); }
+    .notif-item.non-lue { background:var(--theme-light); }
+    .notif-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .notif-body { flex:1; min-width:0; }
+    .notif-titre { font-size:.82rem; font-weight:600; line-height:1.3; }
+    .notif-msg { font-size:.75rem; color:var(--muted); margin-top:2px; }
+    .notif-time { font-size:.7rem; color:#adb5bd; margin-top:3px; }
+    .notif-dot { width:8px; height:8px; border-radius:50%; background:var(--theme-color); flex-shrink:0; margin-top:6px; }
+    .bell-btn { position:relative; background:none; border:none; padding:4px 8px; border-radius:8px; color:var(--muted); transition:background .15s; }
+    .bell-btn:hover { background:var(--body-bg); }
+    .bell-btn .badge-c {
+      position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff;
+      font-size:.6rem; font-weight:700; min-width:16px; height:16px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center; padding:0 3px;
     }
-    .notif-body { flex: 1; min-width: 0; }
-    .notif-titre { font-size: .82rem; font-weight: 600; line-height: 1.3; }
-    .notif-msg { font-size: .75rem; color: #6c757d; line-height: 1.4; margin-top: 2px; }
-    .notif-time { font-size: .7rem; color: #adb5bd; margin-top: 3px; }
-    .notif-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--theme-color); flex-shrink: 0; margin-top: 6px;
-    }
-    .bell-btn {
-      position: relative; background: none; border: none;
-      padding: 4px 8px; border-radius: 8px; color: #6c757d;
-      transition: background .15s;
-    }
-    .bell-btn:hover { background: #f1f3f5; color: #212529; }
-    .bell-btn .badge-count {
-      position: absolute; top: -2px; right: -2px;
-      background: #dc3545; color: #fff;
-      font-size: .6rem; font-weight: 700;
-      min-width: 16px; height: 16px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      padding: 0 3px; line-height: 1;
+
+    /* ═══ RACCOURCIS ═══ */
+    .shortcut-table kbd { background:var(--card-bg); border:1px solid var(--border); border-radius:4px; padding:2px 6px; font-size:.78rem; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media(max-width:768px){
+      #sidebar{transform:translateX(-100%);} #sidebar.open{transform:translateX(0);}
+      #main-content{margin-left:0;}
+      #mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1040;}
+      #mob-overlay.on{display:block;}
     }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
 
+<div id="toast-container"></div>
+<div id="mob-overlay" onclick="toggleSb()"></div>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
 <nav id="sidebar">
-  <div class="brand"><i class="bi bi-archive-fill me-2"></i>Archives ENSMG</div>
+  <div class="brand">
+    <span><i class="bi bi-archive-fill me-2"></i>Archives ENSMG</span>
+    <button class="btn btn-sm btn-link text-white-50 d-md-none p-0" onclick="toggleSb()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
   <div class="py-2 flex-grow-1 overflow-auto">
-    <a href="{% url 'archives:dashboard' %}"
-       class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
+    <a href="{% url 'archives:dashboard' %}" class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
       <i class="bi bi-speedometer2"></i>Tableau de bord
     </a>
     <a href="{% url 'archives:document_list' %}" class="nav-link">
@@ -105,244 +177,310 @@
 
     {% if est_gestionnaire %}
     <div class="nav-section">Gestion archives</div>
-    <a href="{% url 'archives:archiviste_depots' %}" class="nav-link">
+    <a href="{% url 'archives:archiviste_depots' %}" class="nav-link{% if 'archiviste_depot' in request.resolver_match.url_name %} active{% endif %}">
       <i class="bi bi-inbox-fill"></i>Dépôts à traiter
-      {% if nb_notifications > 0 %}<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">!</span>{% endif %}
+      {% if nb_notifications %}<span class="badge bg-warning text-dark badge-sb">{{ nb_notifications }}</span>{% endif %}
     </a>
-    <a href="{% url 'archives:archiviste_prets' %}" class="nav-link">
+    <a href="{% url 'archives:archiviste_prets' %}" class="nav-link{% if 'archiviste_pret' in request.resolver_match.url_name %} active{% endif %}">
       <i class="bi bi-bookmarks-fill"></i>Prêts / demandes
     </a>
-    <a href="{% url 'archives:archiviste_recherches' %}" class="nav-link">
-      <i class="bi bi-search-heart-fill"></i>Recherches documentaires
+    <a href="{% url 'archives:archiviste_recherches' %}" class="nav-link{% if 'archiviste_recherche' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-search-heart-fill"></i>Documents recherchés
     </a>
-    {% else %}
-    <div class="nav-section">Mes actions</div>
-    <a href="{% url 'archives:nouveau_depot' %}" class="nav-link">
-      <i class="bi bi-upload"></i>Déposer un document
-    </a>
-    <a href="{% url 'archives:mes_depots' %}" class="nav-link">
-      <i class="bi bi-inbox"></i>Mes dépôts
-    </a>
-    <a href="{% url 'archives:depots_service' %}" class="nav-link">
-      <i class="bi bi-building"></i>Dépôts du service
-    </a>
-    <a href="{% url 'archives:mes_prets' %}" class="nav-link">
-      <i class="bi bi-bookmark"></i>Mes demandes de prêt
-    </a>
-    <a href="{% url 'archives:mes_recherches' %}" class="nav-link">
-      <i class="bi bi-search-heart"></i>Mes recherches
-    </a>
-    {% endif %}
 
-    {% if est_gestionnaire %}
+    <div class="nav-section">Courriers</div>
+    <a href="{% url 'archives:courrier_liste' %}" class="nav-link{% if 'courrier' in request.resolver_match.url_name and 'bv' not in request.resolver_match.url_name and 'be' not in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-envelope-fill"></i>Registre des courriers
+    </a>
+    <a href="{% url 'archives:courrier_enregistrer' %}" class="nav-link{% if request.resolver_match.url_name == 'courrier_enregistrer' %} active{% endif %}">
+      <i class="bi bi-pencil-square"></i>Enregistrer un courrier
+    </a>
+    <a href="{% url 'archives:courrier_bv_liste' %}" class="nav-link{% if 'courrier_bv' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-arrow-up-circle"></i>Versements courriers
+    </a>
+    <a href="{% url 'archives:courrier_be_liste' %}" class="nav-link{% if 'courrier_be' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-trash3"></i>Éliminations courriers
+    </a>
+
+    <div class="nav-section">Cycle de vie — Documents</div>
+    <a href="{% url 'archives:admin_bordereaux_versement' %}" class="nav-link{% if 'versement' in request.resolver_match.url_name and 'courrier' not in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-arrow-up-circle-fill"></i>Versements docs
+    </a>
+    <a href="{% url 'archives:admin_bordereaux_elimination' %}" class="nav-link{% if 'elimination' in request.resolver_match.url_name and 'courrier' not in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-trash3-fill"></i>Éliminations docs
+    </a>
+    <a href="{% url 'archives:corbeille' %}" class="nav-link{% if request.resolver_match.url_name == 'corbeille' %} active{% endif %}">
+      <i class="bi bi-recycle"></i>Corbeille
+    </a>
+
     <div class="nav-section">Administration</div>
-    <a href="{% url 'archives:admin_categories' %}"
-       class="nav-link{% if 'admin_categorie' in request.resolver_match.url_name %} active{% endif %}">
+    <a href="{% url 'archives:admin_categories' %}" class="nav-link{% if 'admin_categorie' in request.resolver_match.url_name %} active{% endif %}">
       <i class="bi bi-tags-fill"></i>Catégories
     </a>
-    <a href="{% url 'archives:admin_plans' %}"
-       class="nav-link{% if 'admin_plan' in request.resolver_match.url_name %} active{% endif %}">
+    <a href="{% url 'archives:admin_plans' %}" class="nav-link{% if 'admin_plan' in request.resolver_match.url_name %} active{% endif %}">
       <i class="bi bi-diagram-3-fill"></i>Plan de classement
     </a>
-    <a href="{% url 'archives:admin_journal' %}"
-       class="nav-link{% if request.resolver_match.url_name == 'admin_journal' %} active{% endif %}">
+    <a href="{% url 'archives:audit_tokens' %}" class="nav-link{% if 'audit_token' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-key-fill"></i>Accès auditeurs
+    </a>
+    <a href="{% url 'archives:admin_journal' %}" class="nav-link{% if request.resolver_match.url_name == 'admin_journal' %} active{% endif %}">
       <i class="bi bi-shield-lock-fill"></i>Journal d'audit
     </a>
-    {% if est_admin %}
-    <a href="/admin/" class="nav-link"><i class="bi bi-gear-fill"></i>Admin Django</a>
+    {% if est_admin %}<a href="/admin/" class="nav-link"><i class="bi bi-gear-fill"></i>Admin Django</a>{% endif %}
+
+    {% else %}
+    <div class="nav-section">Mes actions</div>
+    <a href="{% url 'archives:nouveau_depot' %}" class="nav-link"><i class="bi bi-upload"></i>Déposer un document</a>
+    <a href="{% url 'archives:mes_depots' %}" class="nav-link"><i class="bi bi-inbox"></i>Mes dépôts</a>
+    <a href="{% url 'archives:depots_service' %}" class="nav-link"><i class="bi bi-building"></i>Dépôts du service</a>
+    <a href="{% url 'archives:mes_prets' %}" class="nav-link"><i class="bi bi-bookmark"></i>Mes prêts</a>
+    <a href="{% url 'archives:mes_recherches' %}" class="nav-link"><i class="bi bi-search-heart"></i>Mes recherches</a>
+
+    {% if request.user.role == 'PERSONNEL' %}
+    <div class="nav-section">Courriers</div>
+    <a href="{% url 'archives:courrier_liste' %}" class="nav-link{% if 'courrier' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-envelope-fill"></i>Registre des courriers
+    </a>
+    <a href="{% url 'archives:courrier_enregistrer' %}" class="nav-link">
+      <i class="bi bi-pencil-square"></i>Enregistrer un courrier
+    </a>
     {% endif %}
     {% endif %}
+
+    <div class="nav-section">Messagerie</div>
+    <a href="{% url 'archives:messagerie_reception' %}" class="nav-link{% if 'messagerie' in request.resolver_match.url_name %} active{% endif %}">
+      <i class="bi bi-envelope{% if nb_messages_non_lus %}-fill{% endif %}"></i>Messages
+      {% if nb_messages_non_lus %}<span class="badge bg-danger rounded-pill badge-sb">{{ nb_messages_non_lus }}</span>{% endif %}
+    </a>
+    <a href="{% url 'archives:messagerie_nouveau' %}" class="nav-link">
+      <i class="bi bi-pencil-square"></i>Nouveau message
+    </a>
 
     <div class="nav-section">Compte</div>
     <a href="{% url 'archives:notifications' %}" class="nav-link">
       <i class="bi bi-bell{% if nb_notifications %}-fill{% endif %}"></i>Notifications
-      {% if nb_notifications %}<span class="badge bg-danger rounded-pill ms-1">{{ nb_notifications }}</span>{% endif %}
+      {% if nb_notifications %}<span class="badge bg-danger rounded-pill badge-sb">{{ nb_notifications }}</span>{% endif %}
     </a>
+    <a href="{% url 'archives:mon_profil' %}" class="nav-link"><i class="bi bi-person-circle"></i>Mon profil</a>
   </div>
-  <div class="p-3" style="border-top:1px solid rgba(255,255,255,.2)">
+
+  <div class="p-3" style="border-top:1px solid rgba(255,255,255,.15)">
+    <div class="d-flex gap-1 mb-2">
+      <button onclick="toggleDark()" class="btn btn-sm btn-outline-light flex-grow-1" title="Mode sombre (Alt+D)">
+        <i id="dark-icon" class="bi bi-moon-stars-fill"></i>
+      </button>
+      <button onclick="showKbd()" class="btn btn-sm btn-outline-light flex-grow-1" title="Raccourcis (?)">
+        <i class="bi bi-keyboard"></i>
+      </button>
+    </div>
     <form method="post" action="{% url 'archives:logout' %}">{% csrf_token %}
       <button type="submit" class="btn btn-sm btn-outline-light w-100">
         <i class="bi bi-box-arrow-right me-1"></i>Déconnexion
       </button>
     </form>
-    <div class="text-white-50 text-center mt-2" style="font-size:.7rem;">
+    <div class="text-white-50 text-center mt-2" style="font-size:.67rem;">
       {{ request.user.get_full_name|default:request.user.username }}
-      {% if request.user.role %}
-      <span class="badge bg-light text-dark ms-1" style="font-size:.62rem;">{{ request.user.role }}</span>
-      {% endif %}
+      {% if request.user.role %}<span class="badge bg-light text-dark ms-1" style="font-size:.6rem;">{{ request.user.role }}</span>{% endif %}
     </div>
   </div>
 </nav>
 
+<!-- ══ MAIN ══════════════════════════════════════════════════════ -->
 <div id="main-content">
   <div id="topbar">
-    <h6 class="mb-0 text-muted fw-normal">{% block topbar_title %}{% endblock %}</h6>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-link text-muted d-md-none p-1 me-1" onclick="toggleSb()">
+        <i class="bi bi-list fs-5"></i>
+      </button>
+      <h6 class="mb-0 fw-normal" style="color:var(--muted)">{% block topbar_title %}{% endblock %}</h6>
+    </div>
 
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex align-items-center gap-2">
+      <!-- Recherche rapide -->
+      <form method="get" action="{% url 'archives:document_list' %}" class="d-none d-lg-flex">
+        <div class="input-group input-group-sm" style="width:210px">
+          <input type="search" name="q" class="form-control border-0 bg-light"
+                 placeholder="Rechercher… (Ctrl+K)" id="global-search"
+                 value="{{ request.GET.q }}" autocomplete="off">
+          <button type="submit" class="btn btn-light border-0"><i class="bi bi-search" style="color:var(--muted)"></i></button>
+        </div>
+      </form>
 
-      <!-- ── Cloche de notification style réseau social ── -->
+      <!-- Cloche -->
       <div class="dropdown">
-        <button class="bell-btn dropdown-toggle-no-caret" type="button"
-                id="notifDropdown"
-                data-bs-toggle="dropdown"
-                data-bs-auto-close="outside"
-                aria-expanded="false">
+        <button class="bell-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside">
           <i class="bi bi-bell{% if nb_notifications %}-fill{% endif %} fs-5"></i>
-          {% if nb_notifications %}
-          <span class="badge-count">{{ nb_notifications }}</span>
-          {% endif %}
+          {% if nb_notifications %}<span class="badge-c">{{ nb_notifications }}</span>{% endif %}
         </button>
-
-        <div class="dropdown-menu dropdown-menu-end notif-dropdown shadow-lg border-0 p-0"
-             aria-labelledby="notifDropdown">
-
-          <!-- En-tête dropdown -->
+        <div class="dropdown-menu dropdown-menu-end notif-dropdown shadow-lg border-0 p-0">
           <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
             <strong style="font-size:.9rem">Notifications</strong>
-            {% if nb_notifications %}
-            <a href="{% url 'archives:notifications' %}" class="text-muted small">
-              Tout marquer lu
-            </a>
-            {% endif %}
+            {% if nb_notifications %}<a href="{% url 'archives:notifications' %}" class="small" style="color:var(--muted)">Tout voir</a>{% endif %}
           </div>
-
-          <!-- Liste notifications -->
           {% if notifs_recentes %}
             {% for notif in notifs_recentes %}
-            <a href="{% url 'archives:notif_marquer_lue' notif.pk %}"
-               class="notif-item {% if not notif.lue %}non-lue{% endif %}">
-
-              <!-- Icône colorée selon le type -->
-              <div class="notif-icon
-                {% if notif.type == 'NOUVEAU_DEPOT' %}bg-primary bg-opacity-10 text-primary
-                {% elif notif.type == 'DEPOT_ARCHIVE' %}bg-success bg-opacity-10 text-success
-                {% elif notif.type == 'DEPOT_REJETE' %}bg-danger bg-opacity-10 text-danger
-                {% elif notif.type == 'DEMANDE_PRET' %}bg-info bg-opacity-10 text-info
-                {% elif notif.type == 'PRET_ACCORDE' %}bg-success bg-opacity-10 text-success
-                {% elif notif.type == 'PRET_REFUSE' %}bg-danger bg-opacity-10 text-danger
-                {% elif notif.type == 'PRET_RETARD' %}bg-warning bg-opacity-10 text-warning
-                {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
-                <i class="bi
-                  {% if notif.type == 'NOUVEAU_DEPOT' %}bi-upload
-                  {% elif notif.type == 'DEPOT_ARCHIVE' %}bi-check-circle
-                  {% elif notif.type == 'DEPOT_REJETE' %}bi-x-circle
-                  {% elif notif.type == 'DEMANDE_PRET' %}bi-bookmark-plus
-                  {% elif notif.type == 'PRET_ACCORDE' %}bi-bookmark-check
-                  {% elif notif.type == 'PRET_REFUSE' %}bi-bookmark-x
-                  {% elif notif.type == 'PRET_RETARD' %}bi-clock-history
-                  {% elif notif.type == 'ALERTE_DUA' %}bi-hourglass-split
-                  {% elif notif.type == 'INTEGRITE_KO' %}bi-shield-exclamation
-                  {% else %}bi-bell{% endif %}"></i>
+            <a href="{% url 'archives:notif_marquer_lue' notif.pk %}" class="notif-item {% if not notif.lue %}non-lue{% endif %}">
+              <div class="notif-icon {% if notif.type == 'NOUVEAU_DEPOT' %}bg-primary bg-opacity-10 text-primary{% elif notif.type in 'DEPOT_ARCHIVE,PRET_ACCORDE' %}bg-success bg-opacity-10 text-success{% elif 'DUA' in notif.type %}bg-warning bg-opacity-10 text-warning{% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+                <i class="bi bi-{% if notif.type == 'NOUVEAU_DEPOT' %}upload{% elif notif.type == 'DEPOT_ARCHIVE' %}check-circle{% elif notif.type == 'DEPOT_REJETE' %}x-circle{% elif 'DUA' in notif.type %}hourglass-split{% elif notif.type == 'INTEGRITE_KO' %}shield-exclamation{% else %}bell{% endif %}"></i>
               </div>
-
-              <!-- Corps -->
               <div class="notif-body">
                 <div class="notif-titre">{{ notif.titre|truncatechars:45 }}</div>
-                <div class="notif-msg">{{ notif.message|truncatechars:70 }}</div>
-                <div class="notif-time">
-                  <i class="bi bi-clock me-1"></i>{{ notif.date_creation|timesince }} ago
-                </div>
+                <div class="notif-msg">{{ notif.message|truncatechars:65 }}</div>
+                <div class="notif-time"><i class="bi bi-clock me-1"></i>{{ notif.date_creation|timesince }}</div>
               </div>
-
-              <!-- Pastille non-lu -->
-              {% if not notif.lue %}
-              <div class="notif-dot"></div>
-              {% endif %}
+              {% if not notif.lue %}<div class="notif-dot"></div>{% endif %}
             </a>
             {% endfor %}
           {% else %}
-            <div class="text-center text-muted py-4 px-3">
+            <div class="text-center py-4 px-3" style="color:var(--muted)">
               <i class="bi bi-bell-slash fs-2 d-block mb-2 opacity-50"></i>
               <small>Aucune nouvelle notification</small>
             </div>
           {% endif %}
-
-          <!-- Pied dropdown -->
           <div class="border-top text-center py-2">
-            <a href="{% url 'archives:notifications' %}"
-               class="text-decoration-none small fw-semibold"
-               style="color:var(--theme-color)">
+            <a href="{% url 'archives:notifications' %}" class="text-decoration-none small fw-semibold" style="color:var(--theme-color)">
               Voir toutes les notifications
             </a>
           </div>
         </div>
       </div>
 
-      <!-- Dropdown profil utilisateur -->
+      <!-- Profil -->
       <div class="dropdown">
         <button class="btn btn-sm d-flex align-items-center gap-2 border rounded-pill px-3 py-1"
-                style="background:#f8f9fa;font-size:.85rem"
-                type="button"
-                id="profilDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
+                style="background:var(--body-bg);font-size:.85rem" type="button" data-bs-toggle="dropdown">
           <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
-               style="width:28px;height:28px;font-size:.7rem;background:var(--theme-color)">
+               style="width:26px;height:26px;font-size:.7rem;background:var(--theme-color)">
             {{ request.user.first_name|first|upper|default:request.user.username|first|upper }}
           </div>
-          <span class="d-none d-md-inline text-dark">
-            {{ request.user.get_full_name|default:request.user.username|truncatechars:20 }}
-          </span>
-          <i class="bi bi-chevron-down text-muted" style="font-size:.7rem"></i>
+          <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username|truncatechars:18 }}</span>
+          <i class="bi bi-chevron-down" style="font-size:.7rem;color:var(--muted)"></i>
         </button>
-
-        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1" aria-labelledby="profilDropdown"
-            style="min-width:220px">
-          <!-- En-tête -->
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1" style="min-width:220px">
           <li class="px-3 py-2 border-bottom">
-            <div class="fw-semibold" style="font-size:.9rem">
-              {{ request.user.get_full_name|default:request.user.username }}
-            </div>
-            <div class="text-muted" style="font-size:.75rem">{{ request.user.email }}</div>
-            {% if request.user.departement %}
-            <div class="text-muted" style="font-size:.72rem">
-              <i class="bi bi-building me-1"></i>{{ request.user.departement.nom }}
-            </div>
-            {% endif %}
-            <span class="badge mt-1" style="background:var(--theme-color);font-size:.62rem">
-              {{ request.user.get_role_display }}
-            </span>
+            <div class="fw-semibold" style="font-size:.9rem">{{ request.user.get_full_name|default:request.user.username }}</div>
+            <div style="font-size:.75rem;color:var(--muted)">{{ request.user.email }}</div>
+            <span class="badge mt-1" style="background:var(--theme-color);font-size:.62rem">{{ request.user.get_role_display }}</span>
           </li>
-          <!-- Actions -->
-          <li>
-            <a class="dropdown-item py-2" href="{% url 'archives:mon_profil' %}">
-              <i class="bi bi-person-circle me-2 text-muted"></i>Mon profil
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item py-2" href="{% url 'archives:notifications' %}">
-              <i class="bi bi-bell me-2 text-muted"></i>Mes notifications
-              {% if nb_notifications %}
-              <span class="badge bg-danger ms-1" style="font-size:.65rem">{{ nb_notifications }}</span>
-              {% endif %}
-            </a>
-          </li>
+          <li><a class="dropdown-item py-2" href="{% url 'archives:mon_profil' %}"><i class="bi bi-person-circle me-2" style="color:var(--muted)"></i>Mon profil</a></li>
+          <li><a class="dropdown-item py-2" href="{% url 'archives:notifications' %}"><i class="bi bi-bell me-2" style="color:var(--muted)"></i>Notifications{% if nb_notifications %}<span class="badge bg-danger ms-1" style="font-size:.65rem">{{ nb_notifications }}</span>{% endif %}</a></li>
+          <li><hr class="dropdown-divider my-1"></li>
+          <li><button class="dropdown-item py-2" onclick="toggleDark()"><i class="bi bi-moon-stars me-2" style="color:var(--muted)"></i>Mode sombre <kbd class="ms-1">Alt+D</kbd></button></li>
+          <li><button class="dropdown-item py-2" onclick="showKbd()"><i class="bi bi-keyboard me-2" style="color:var(--muted)"></i>Raccourcis <kbd class="ms-1">?</kbd></button></li>
           <li><hr class="dropdown-divider my-1"></li>
           <li>
-            <a class="dropdown-item py-2 text-danger" href="{% url 'archives:logout' %}">
-              <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
-            </a>
+            <form method="post" action="{% url 'archives:logout' %}" class="m-0 p-0">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item py-2 text-danger border-0 bg-transparent w-100 text-start">
+                <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+              </button>
+            </form>
           </li>
         </ul>
       </div>
     </div>
   </div>
 
-  <div class="page-body">
-    {% if messages %}
-    <div class="mb-3">
-      {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show py-2">
-        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  <div class="page-body">{% block content %}{% endblock %}</div>
+</div>
+
+<!-- ══ MODAL RACCOURCIS ══════════════════════════════════════════ -->
+<div class="modal fade" id="kbdModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header"><h6 class="modal-title fw-bold"><i class="bi bi-keyboard me-2"></i>Raccourcis clavier</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      {% endfor %}
+      <div class="modal-body shortcut-table">
+        <table class="table table-sm mb-0">
+          <tr><td><kbd>?</kbd></td><td>Afficher cette aide</td></tr>
+          <tr><td><kbd>Alt</kbd>+<kbd>D</kbd></td><td>Basculer mode sombre</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Recherche rapide</td></tr>
+          <tr><td><kbd>G</kbd> <kbd>D</kbd></td><td>Tableau de bord</td></tr>
+          <tr><td><kbd>G</kbd> <kbd>L</kbd></td><td>Liste des documents</td></tr>
+          {% if est_gestionnaire %}
+          <tr><td><kbd>G</kbd> <kbd>P</kbd></td><td>Dépôts en attente</td></tr>
+          <tr><td><kbd>G</kbd> <kbd>J</kbd></td><td>Journal d'audit</td></tr>
+          {% else %}
+          <tr><td><kbd>G</kbd> <kbd>N</kbd></td><td>Nouveau dépôt</td></tr>
+          {% endif %}
+          <tr><td><kbd>Esc</kbd></td><td>Fermer les modals</td></tr>
+        </table>
+      </div>
     </div>
-    {% endif %}
-    {% block content %}{% endblock %}
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ── Toasts ─────────────────────────────────────────────────── */
+function toast(msg, type='i', ms=4500) {
+  const ic = {s:'check-circle-fill',e:'x-circle-fill',w:'exclamation-triangle-fill',i:'info-circle-fill'};
+  const el = document.createElement('div');
+  el.className = `toast-x ${type}`;
+  el.innerHTML = `<i class="bi bi-${ic[type]||ic.i}" style="flex-shrink:0;margin-top:.1rem"></i>
+    <div style="flex:1;font-size:.85rem">${msg}</div>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:0;opacity:.6">
+      <i class="bi bi-x-lg" style="font-size:.8rem"></i></button>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>{el.style.animation='txOut .3s ease forwards';setTimeout(()=>el.remove(),300);},ms);
+}
+window.showToast = toast; /* accessible depuis les templates */
+
+document.addEventListener('DOMContentLoaded',()=>{
+  {% for msg in messages %}
+  toast(`{{ msg.message|escapejs }}`,
+    '{% if "success" in msg.tags %}s{% elif "error" in msg.tags or "danger" in msg.tags %}e{% elif "warning" in msg.tags %}w{% else %}i{% endif %}'
+  );
+  {% endfor %}
+});
+
+/* ── Mode sombre ────────────────────────────────────────────── */
+function toggleDark(){
+  const h=document.documentElement, d=h.dataset.theme==='dark';
+  h.dataset.theme=d?'light':'dark';
+  localStorage.setItem('ensmg-th',h.dataset.theme);
+  document.getElementById('dark-icon').className=d?'bi bi-moon-stars-fill':'bi bi-sun-fill';
+}
+(()=>{
+  const s=localStorage.getItem('ensmg-th')||'light';
+  document.documentElement.dataset.theme=s;
+  const i=document.getElementById('dark-icon');
+  if(i) i.className=s==='dark'?'bi bi-sun-fill':'bi bi-moon-stars-fill';
+})();
+
+/* ── Raccourcis ─────────────────────────────────────────────── */
+let kbdModal;
+document.addEventListener('DOMContentLoaded',()=>{ kbdModal=new bootstrap.Modal(document.getElementById('kbdModal')); });
+function showKbd(){ kbdModal&&kbdModal.show(); }
+
+let seq=null;
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)){
+    if(e.key==='Escape') e.target.blur(); return;
+  }
+  if(e.ctrlKey&&e.key==='k'){e.preventDefault();const s=document.getElementById('global-search');s&&(s.focus(),s.select());return;}
+  if(e.altKey&&(e.key==='d'||e.key==='D')){toggleDark();return;}
+  if(e.key==='?'){showKbd();return;}
+  if(e.key.toLowerCase()==='g'){seq='g';setTimeout(()=>seq=null,1500);return;}
+  if(seq==='g'){
+    seq=null;
+    const nav={
+      d:'{% url "archives:dashboard" %}',
+      l:'{% url "archives:document_list" %}',
+      {% if est_gestionnaire %}p:'{% url "archives:archiviste_depots" %}',j:'{% url "archives:admin_journal" %}',
+      {% else %}n:'{% url "archives:nouveau_depot" %}',{% endif %}
+    };
+    if(nav[e.key.toLowerCase()]) window.location.href=nav[e.key.toLowerCase()];
+  }
+});
+
+/* ── Sidebar mobile ─────────────────────────────────────────── */
+function toggleSb(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mob-overlay').classList.toggle('on');
+}
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

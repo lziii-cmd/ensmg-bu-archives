@@ -3,12 +3,16 @@ archives/urls.py — Routage URL de l'application archives ENSMG
 """
 from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.views.generic import RedirectView
 
 from archives import views
 
 app_name = 'archives'
 
 urlpatterns = [
+    # ── Racine : redirige vers le tableau de bord (lui-même redirige vers login si non connecté)
+    path('', RedirectView.as_view(url='/dashboard/', permanent=False), name='index'),
+
     # ── Authentification ──────────────────────────────────────────────────────
     path(
         'auth/login/',
@@ -102,4 +106,56 @@ urlpatterns = [
 
     # Provenance externe (AJAX + création depuis popup dépôt)
     path('gestion/provenance/ajax-create/', views.admin_provenance_create_ajax, name='admin_provenance_ajax'),
+
+    # ── Bordereaux de versement ───────────────────────────────────────────────
+    path('gestion/versements/', views.admin_bordereaux_versement, name='admin_bordereaux_versement'),
+    path('gestion/versements/generer/', views.admin_bordereau_versement_generer, name='admin_bordereau_versement_generer'),
+    path('gestion/versements/<int:pk>/', views.admin_bordereau_versement_detail, name='admin_bordereau_versement_detail'),
+
+    # ── Bordereaux d'élimination ──────────────────────────────────────────────
+    path('gestion/eliminations/', views.admin_bordereaux_elimination, name='admin_bordereaux_elimination'),
+    path('gestion/eliminations/creer/', views.admin_bordereau_elimination_create, name='admin_bordereau_elimination_create'),
+    path('gestion/eliminations/<int:pk>/', views.admin_bordereau_elimination_detail, name='admin_bordereau_elimination_detail'),
+
+    # ── Corbeille (soft delete) ───────────────────────────────────────────────
+    path('gestion/corbeille/', views.corbeille_list, name='corbeille'),
+    path('gestion/corbeille/<int:pk>/restaurer/', views.corbeille_restaurer, name='corbeille_restaurer'),
+    path('documents/<int:pk>/supprimer/', views.document_supprimer, name='document_supprimer'),
+
+    # ── Mode Audit temporaire ─────────────────────────────────────────────────
+    path('gestion/audit/', views.audit_tokens_list, name='audit_tokens'),
+    path('gestion/audit/creer/', views.audit_token_create, name='audit_token_create'),
+    path('gestion/audit/<int:pk>/', views.audit_token_detail, name='audit_token_detail'),
+    path('audit/<str:token_str>/', views.audit_acces, name='audit_acces'),
+
+    # ── Actions en masse + Stats API ─────────────────────────────────────────
+    path('api/documents/bulk-action/', views.documents_bulk_action, name='documents_bulk_action'),
+    path('api/dashboard/stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
+
+    # ── Module Courrier ───────────────────────────────────────────────────────
+    path('courriers/', views.courrier_liste, name='courrier_liste'),
+    path('courriers/nouveau/', views.courrier_enregistrer, name='courrier_enregistrer'),
+    path('courriers/<int:pk>/', views.courrier_detail, name='courrier_detail'),
+    path('courriers/<int:pk>/modifier/', views.courrier_modifier, name='courrier_modifier'),
+    path('courriers/<int:pk>/action/', views.courrier_action, name='courrier_action'),
+    path('courriers/<int:pk>/supprimer/', views.courrier_supprimer, name='courrier_supprimer'),
+
+    # Bordereaux versement courriers
+    path('courriers/versements/', views.courrier_bv_liste, name='courrier_bv_liste'),
+    path('courriers/versements/nouveau/', views.courrier_bv_creer, name='courrier_bv_creer'),
+    path('courriers/versements/<int:pk>/', views.courrier_bv_detail, name='courrier_bv_detail'),
+
+    # Bordereaux élimination courriers
+    path('courriers/eliminations/', views.courrier_be_liste, name='courrier_be_liste'),
+    path('courriers/eliminations/nouveau/', views.courrier_be_creer, name='courrier_be_creer'),
+    path('courriers/eliminations/<int:pk>/', views.courrier_be_detail, name='courrier_be_detail'),
+
+    # ── Messagerie interne ────────────────────────────────────────────────────
+    path('messagerie/', views.messagerie_reception, name='messagerie_reception'),
+    path('messagerie/envoyes/', views.messagerie_envoyes, name='messagerie_envoyes'),
+    path('messagerie/nouveau/', views.messagerie_nouveau, name='messagerie_nouveau'),
+    path('messagerie/corbeille/', views.messagerie_corbeille, name='messagerie_corbeille'),
+    path('messagerie/<int:pk>/', views.messagerie_detail, name='messagerie_detail'),
+    path('messagerie/<int:pk>/repondre/', views.messagerie_repondre, name='messagerie_repondre'),
+    path('messagerie/<int:pk>/supprimer/', views.messagerie_supprimer, name='messagerie_supprimer'),
 ]

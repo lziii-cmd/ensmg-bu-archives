@@ -1,0 +1,62 @@
+{% extends "archives/base.html" %}
+{% block title %}Bordereaux d'élimination — Courriers{% endblock %}
+{% block topbar_title %}Éliminations des courriers{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h5 class="fw-bold mb-0">Bordereaux d'élimination — Courriers</h5>
+    <a href="{% url 'archives:courrier_be_creer' %}" class="btn btn-danger btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Nouveau bordereau
+    </a>
+  </div>
+  <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3">
+    <i class="bi bi-info-circle-fill"></i>
+    <small>Conformément à la Loi sénégalaise n° 2006-19, tout bordereau d'élimination doit obtenir le <strong>visa de la Direction des Archives du Sénégal (DAS)</strong> avant toute destruction.</small>
+  </div>
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      {% if bordereaux %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:.88rem;">
+          <thead class="table-light">
+            <tr><th>Numéro</th><th>Service</th><th>Courriers</th><th>Créé par</th><th>Date</th><th>Visa DAS</th><th>Statut</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for be in bordereaux %}
+            <tr>
+              <td><a href="{% url 'archives:courrier_be_detail' be.pk %}" class="fw-semibold text-decoration-none">{{ be.numero }}</a></td>
+              <td>{{ be.service_producteur }}</td>
+              <td><span class="badge bg-secondary">{{ be.nb_courriers }}</span></td>
+              <td>{{ be.cree_par.get_full_name|default:be.cree_par.username }}</td>
+              <td class="text-muted">{{ be.date_creation|date:"d/m/Y" }}</td>
+              <td>
+                {% if be.visa_das %}
+                  <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>{{ be.reference_visa }}</span>
+                {% else %}
+                  <span class="badge bg-secondary">En attente</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if be.statut == 'BROUILLON' %}<span class="badge bg-secondary">Brouillon</span>
+                {% elif be.statut == 'EN_VALIDATION' %}<span class="badge bg-warning text-dark">En attente DAS</span>
+                {% elif be.statut == 'VISA_OBTENU' %}<span class="badge bg-info text-dark">Visa obtenu</span>
+                {% elif be.statut == 'EXECUTE' %}<span class="badge bg-danger">Exécuté</span>
+                {% elif be.statut == 'REJETE' %}<span class="badge bg-dark">Rejeté</span>{% endif %}
+              </td>
+              <td><a href="{% url 'archives:courrier_be_detail' be.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-trash3" style="font-size:2.5rem;"></i>
+        <p class="mt-2">Aucun bordereau d'élimination courrier.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "archives/base.html" %}
+{% block title %}Accès auditeurs — Archives ENSMG{% endblock %}
+{% block topbar_title %}Accès auditeurs temporaires{% endblock %}
+
+{% block content %}
+{% include "archives/_breadcrumb.html" %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-1 fw-bold"><i class="bi bi-key me-2 text-info"></i>Tokens d'accès auditeurs</h5>
+    <p class="text-muted small mb-0">Liens temporaires sécurisés pour inspecteurs CAMES, auditeurs MESRI, commissaires aux comptes.</p>
+  </div>
+  <a href="{% url 'archives:audit_token_create' %}" class="btn btn-info text-white">
+    <i class="bi bi-plus-circle me-2"></i>Nouveau token
+  </a>
+</div>
+
+{% if tokens %}
+<div class="row g-3">
+  {% for token in tokens %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100 {% if token.est_valide %}border-start border-success border-3{% else %}border-start border-secondary border-3{% endif %}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h6 class="mb-1 fw-semibold">{{ token.auditeur_nom|truncatechars:35 }}</h6>
+            <small class="text-muted">{{ token.description|truncatechars:50 }}</small>
+          </div>
+          {% if token.est_valide %}
+            <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Actif</span>
+          {% elif not token.actif %}
+            <span class="badge bg-secondary">Révoqué</span>
+          {% else %}
+            <span class="badge bg-danger">Expiré</span>
+          {% endif %}
+        </div>
+
+        <div class="text-muted small mb-2">
+          <i class="bi bi-calendar3 me-1"></i>
+          {{ token.date_debut|date:"d/m/Y H:i" }} → {{ token.date_expiration|date:"d/m/Y H:i" }}
+        </div>
+
+        {% if token.est_valide %}
+        <div class="text-muted small mb-2">
+          <i class="bi bi-clock me-1"></i>Expire dans {{ token.jours_restants }} jour(s)
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 small text-muted mb-3">
+          <span><i class="bi bi-eye me-1"></i>{{ token.nb_consultations }} consultation(s)</span>
+          <span><i class="bi bi-shield me-1"></i>max {{ token.get_confidentialite_max_display }}</span>
+        </div>
+
+        {% if token.est_valide %}
+        <div class="bg-light rounded p-2 mb-2">
+          <small class="text-muted d-block mb-1">Lien de partage :</small>
+          <code style="font-size:.72rem;word-break:break-all">
+            {{ request.scheme }}://{{ request.get_host }}/audit/{{ token.token }}/
+          </code>
+          <button class="btn btn-sm btn-outline-secondary mt-1 w-100"
+                  onclick="navigator.clipboard.writeText('{{ request.scheme }}://{{ request.get_host }}/audit/{{ token.token }}/');this.innerHTML='<i class=\'bi bi-check me-1\'></i>Copié !'">
+            <i class="bi bi-clipboard me-1"></i>Copier le lien
+          </button>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'archives:audit_token_detail' token.pk %}" class="btn btn-sm btn-outline-info w-100">
+          <i class="bi bi-gear me-1"></i>Gérer
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-key fs-1 text-muted opacity-30 d-block mb-3"></i>
+    <h6 class="text-muted">Aucun token d'accès créé</h6>
+    <p class="text-muted small mb-4">Les tokens permettent de donner un accès temporaire limité à des auditeurs externes, sans créer de compte utilisateur.</p>
+    <a href="{% url 'archives:audit_token_create' %}" class="btn btn-info text-white">
+      <i class="bi bi-plus-circle me-2"></i>Créer le premier token
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

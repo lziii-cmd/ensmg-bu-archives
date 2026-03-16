@@ -1,0 +1,70 @@
+{% extends "archives/base.html" %}
+{% block title %}{% if reception.en_corbeille %}Restaurer le message{% else %}Supprimer le message{% endif %}{% endblock %}
+{% block topbar_title %}Messagerie{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <ul class="nav nav-pills mb-3 gap-1">
+    <li class="nav-item"><a class="nav-link" href="{% url 'archives:messagerie_reception' %}"><i class="bi bi-inbox-fill me-1"></i>Réception</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'archives:messagerie_envoyes' %}"><i class="bi bi-send me-1"></i>Envoyés</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'archives:messagerie_corbeille' %}"><i class="bi bi-trash3-fill me-1"></i>Corbeille</a></li>
+  </ul>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          {% if reception.en_corbeille %}
+            <i class="bi bi-arrow-counterclockwise text-success" style="font-size:3rem;"></i>
+            <h5 class="mt-3 mb-1">Restaurer ce message ?</h5>
+            <p class="text-muted small mb-4">
+              Le message <strong>« {{ reception.message.objet }} »</strong> sera remis dans votre boîte de réception.
+            </p>
+          {% else %}
+            <i class="bi bi-trash3 text-danger" style="font-size:3rem;"></i>
+            <h5 class="mt-3 mb-1">Déplacer ce message en corbeille ?</h5>
+            <p class="text-muted small mb-4">
+              Le message <strong>« {{ reception.message.objet }} »</strong> sera déplacé dans la corbeille.<br>
+              Il pourra être restauré ultérieurement.
+            </p>
+          {% endif %}
+
+          <div class="card bg-light border-0 mb-4 text-start">
+            <div class="card-body py-2 px-3">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px;height:32px;font-size:0.75rem;">
+                  {{ reception.message.expediteur.first_name|first|upper }}{{ reception.message.expediteur.last_name|first|upper }}
+                </div>
+                <div>
+                  <div class="fw-semibold small">{{ reception.message.expediteur.get_full_name|default:reception.message.expediteur.username }}</div>
+                  <div class="text-muted" style="font-size:0.75rem;">{{ reception.message.date_envoi|date:"d/m/Y à H:i" }}</div>
+                </div>
+              </div>
+              <p class="mb-0 small text-muted">{{ reception.message.corps|truncatechars:120 }}</p>
+            </div>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-center gap-2">
+              <a href="{% url 'archives:messagerie_detail' reception.message.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Annuler
+              </a>
+              {% if reception.en_corbeille %}
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurer
+                </button>
+              {% else %}
+                <button type="submit" class="btn btn-danger">
+                  <i class="bi bi-trash3 me-1"></i>Mettre en corbeille
+                </button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "archives/base.html" %}
+{% block title %}Répondre — {{ msg_original.objet }}{% endblock %}
+{% block topbar_title %}Répondre{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width:820px;">
+
+  <div class="d-flex align-items-center mb-3 gap-2">
+    <a href="{% url 'archives:messagerie_detail' msg_original.pk %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h5 class="mb-0">Rép : {{ msg_original.objet }}</h5>
+  </div>
+
+  {# Message original (citation) #}
+  <div class="card bg-light border-0 mb-3">
+    <div class="card-body py-2 px-3">
+      <p class="text-muted small mb-1">
+        <i class="bi bi-quote me-1"></i>
+        <strong>{{ msg_original.expediteur.get_full_name|default:msg_original.expediteur.username }}</strong>
+        — {{ msg_original.date_envoi|date:"d/m/Y H:i" }}
+      </p>
+      <p class="text-muted small mb-0" style="white-space:pre-wrap;">{{ msg_original.corps|truncatechars:300 }}</p>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Votre réponse <span class="text-danger">*</span></label>
+          <textarea name="corps" class="form-control" rows="7" required
+                    placeholder="Rédigez votre réponse…"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Pièce jointe <span class="text-muted fw-normal">(optionnel)</span></label>
+          <input type="file" name="piece_jointe" class="form-control">
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <a href="{% url 'archives:messagerie_detail' msg_original.pk %}" class="btn btn-outline-secondary">Annuler</a>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-reply-fill me-1"></i>Envoyer la réponse</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

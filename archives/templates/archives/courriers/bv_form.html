@@ -1,0 +1,98 @@
+{% extends "archives/base.html" %}
+{% block title %}Nouveau bordereau de versement — Courriers{% endblock %}
+{% block topbar_title %}Versement des courriers{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+  <div class="row justify-content-center">
+    <div class="col-xl-9">
+      <form method="post">
+        {% csrf_token %}
+        {% if messages %}
+          {% for msg in messages %}
+          <div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-info-circle me-1"></i>Informations du bordereau
+          </div>
+          <div class="card-body pb-3">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Service versant</label>
+                <input type="text" name="service_versant" class="form-control" value="Secrétariat ENSMG" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Observations</label>
+                <input type="text" name="observations" class="form-control" placeholder="Optionnel">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-envelope-check me-1"></i>Courriers à verser
+            <span class="ms-1 text-muted">(archivés, sort final Conservation)</span>
+          </div>
+          <div class="card-body p-0">
+            {% if courriers_eligibles %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="font-size:.86rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:42px;"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                    <th>Numéro</th>
+                    <th>Objet</th>
+                    <th>Expéditeur</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in courriers_eligibles %}
+                  <tr>
+                    <td><input type="checkbox" name="courriers" value="{{ c.pk }}" class="form-check-input courrier-cb"></td>
+                    <td>
+                      {% if c.sens == 'ARRIVEE' %}
+                        <span class="badge bg-primary"><i class="bi bi-arrow-down-left"></i></span>
+                      {% else %}
+                        <span class="badge bg-success"><i class="bi bi-arrow-up-right"></i></span>
+                      {% endif %}
+                      {{ c.numero_enregistrement }}
+                    </td>
+                    <td class="text-truncate" style="max-width:260px;">{{ c.objet }}</td>
+                    <td class="text-muted">{{ c.expediteur|truncatechars:30 }}</td>
+                    <td class="text-muted text-nowrap">{{ c.date_courrier|date:"d/m/Y" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-check-circle" style="font-size:2rem;"></i>
+              <p class="mt-2 mb-0">Aucun courrier éligible au versement.<br>
+              <small>Les courriers doivent être archivés avec sort final Conservation et ne pas déjà figurer dans un bordereau.</small></p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{% url 'archives:courrier_bv_liste' %}" class="btn btn-outline-secondary">Annuler</a>
+          <button type="submit" class="btn btn-primary" {% if not courriers_eligibles %}disabled{% endif %}>
+            <i class="bi bi-save me-1"></i>Créer le bordereau
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('select-all')?.addEventListener('change', function() {
+    document.querySelectorAll('.courrier-cb').forEach(cb => cb.checked = this.checked);
+  });
+</script>
+{% endblock %}

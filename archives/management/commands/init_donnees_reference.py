@@ -38,6 +38,11 @@ DEPARTEMENTS = [
     ('COOP',  'Coopération et Relations Extérieures',      'DIRECTION',     'Partenariats, conventions et coopération internationale.'),
     ('INFO',  'Service Informatique',                      'SUPPORT',       'Infrastructure informatique, systèmes d\'information et sécurité.'),
     ('LOG',   'Logistique et Patrimoine',                  'SUPPORT',       'Gestion du patrimoine immobilier et des équipements.'),
+    # ── Services administratifs opérationnels ────────────────────────────────
+    ('CF',    'Comptabilité Financière',                   'ADMINISTRATIF', 'Gestion de la trésorerie, des recettes et des dépenses budgétaires.'),
+    ('CM',    'Comptabilité des Matières',                 'ADMINISTRATIF', 'Suivi et inventaire des biens mobiliers et équipements de l\'école.'),
+    ('SEC',   'Secrétariat',                               'ADMINISTRATIF', 'Secrétariat général, courriers, agenda et accueil institutionnel.'),
+    ('ARC',   'Service des Archives',                      'SUPPORT',       'Conservation, traitement et communication des archives institutionnelles.'),
 ]
 
 CATEGORIES = [

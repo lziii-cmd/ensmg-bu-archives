@@ -1,0 +1,113 @@
+{% extends "archives/base.html" %}
+{% block title %}{{ bv.numero }}{% endblock %}
+{% block topbar_title %}Bordereau de versement — Courriers{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold">{{ bv.numero }}
+          <span class="ms-2
+            {% if bv.statut == 'BROUILLON' %}badge bg-secondary
+            {% elif bv.statut == 'EN_VALIDATION' %}badge bg-warning text-dark
+            {% elif bv.statut == 'VALIDE' %}badge bg-success
+            {% elif bv.statut == 'EXECUTE' %}badge bg-primary
+            {% elif bv.statut == 'REJETE' %}badge bg-danger{% endif %}">
+            {{ bv.get_statut_display }}
+          </span>
+        </div>
+        <div class="card-body pb-2" style="font-size:.88rem;">
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted">Service versant</dt><dd class="col-sm-8">{{ bv.service_versant }}</dd>
+            <dt class="col-sm-4 text-muted">Service destinataire</dt><dd class="col-sm-8">{{ bv.service_destinataire }}</dd>
+            <dt class="col-sm-4 text-muted">Créé par</dt><dd class="col-sm-8">{{ bv.cree_par.get_full_name|default:bv.cree_par.username }}</dd>
+            <dt class="col-sm-4 text-muted">Date de création</dt><dd class="col-sm-8">{{ bv.date_creation|date:"d/m/Y" }}</dd>
+            {% if bv.valide_par %}
+            <dt class="col-sm-4 text-muted">Validé par</dt><dd class="col-sm-8">{{ bv.valide_par.get_full_name|default:bv.valide_par.username }} — {{ bv.date_validation|date:"d/m/Y" }}</dd>
+            {% endif %}
+            {% if bv.observations %}
+            <dt class="col-sm-4 text-muted">Observations</dt><dd class="col-sm-8">{{ bv.observations }}</dd>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-envelope-check me-1"></i>Courriers inclus ({{ bv.nb_courriers }})
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle" style="font-size:.87rem;">
+              <thead class="table-light">
+                <tr><th>Numéro</th><th>Objet</th><th>Expéditeur</th><th>Date</th><th>Statut</th></tr>
+              </thead>
+              <tbody>
+                {% for c in courriers %}
+                <tr>
+                  <td>
+                    {% if c.sens == 'ARRIVEE' %}<span class="badge bg-primary me-1"><i class="bi bi-arrow-down-left"></i></span>
+                    {% else %}<span class="badge bg-success me-1"><i class="bi bi-arrow-up-right"></i></span>{% endif %}
+                    <a href="{% url 'archives:courrier_detail' c.pk %}" class="text-decoration-none">{{ c.numero_enregistrement }}</a>
+                  </td>
+                  <td class="text-truncate" style="max-width:230px;">{{ c.objet }}</td>
+                  <td class="text-muted">{{ c.expediteur|truncatechars:30 }}</td>
+                  <td class="text-muted text-nowrap">{{ c.date_courrier|date:"d/m/Y" }}</td>
+                  <td>
+                    {% if c.statut == 'ARCHIVE' %}<span class="badge bg-dark">Archivé</span>
+                    {% elif c.statut == 'VERSE' %}<span class="badge bg-primary">Versé</span>
+                    {% else %}<span class="badge bg-secondary">{{ c.get_statut_display }}</span>{% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-3">Aucun courrier associé.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-arrow-right-circle me-1"></i>Actions de workflow
+        </div>
+        <div class="card-body">
+          <form method="post" class="d-grid gap-2">
+            {% csrf_token %}
+            {% if bv.statut == 'BROUILLON' %}
+            <button type="submit" name="action" value="soumettre" class="btn btn-warning btn-sm">
+              <i class="bi bi-send me-1"></i>Soumettre pour validation
+            </button>
+            {% elif bv.statut == 'EN_VALIDATION' and est_admin %}
+            <button type="submit" name="action" value="valider" class="btn btn-success btn-sm">
+              <i class="bi bi-check2-circle me-1"></i>Valider le bordereau
+            </button>
+            <button type="submit" name="action" value="rejeter" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-x-circle me-1"></i>Rejeter
+            </button>
+            {% elif bv.statut == 'VALIDE' %}
+            <button type="submit" name="action" value="executer" class="btn btn-primary btn-sm">
+              <i class="bi bi-check-all me-1"></i>Marquer versement exécuté
+            </button>
+            {% elif bv.statut == 'EXECUTE' %}
+            <div class="text-center text-success py-2">
+              <i class="bi bi-check-circle-fill fs-4"></i>
+              <p class="mb-0 small">Versement exécuté</p>
+            </div>
+            {% elif bv.statut == 'REJETE' %}
+            <div class="text-center text-danger py-2">
+              <i class="bi bi-x-circle-fill fs-4"></i>
+              <p class="mb-0 small">Bordereau rejeté</p>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

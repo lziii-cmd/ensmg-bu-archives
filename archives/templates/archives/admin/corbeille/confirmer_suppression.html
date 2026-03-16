@@ -1,0 +1,32 @@
+{% extends "archives/base.html" %}
+{% block title %}Envoyer en corbeille{% endblock %}
+{% block topbar_title %}Envoyer en corbeille{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm border-warning text-center">
+      <div class="card-body py-5">
+        <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
+             style="width:72px;height:72px;background:rgba(255,193,7,.15)">
+          <i class="bi bi-trash3 fs-2 text-warning"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Envoyer en corbeille ?</h5>
+        <p class="text-muted mb-1">« {{ doc.titre|truncatechars:60 }} »</p>
+        <p class="text-muted small mb-1">Réf. {{ doc.identifiant }}</p>
+        <p class="small text-success mb-4">
+          <i class="bi bi-shield-check me-1"></i>
+          Récupérable pendant 30 jours depuis la corbeille.
+        </p>
+        <form method="post" class="d-flex gap-2 justify-content-center">
+          {% csrf_token %}
+          <a href="{% url 'archives:document_detail' doc.pk %}" class="btn btn-outline-secondary">Annuler</a>
+          <button type="submit" class="btn btn-warning text-dark">
+            <i class="bi bi-trash3 me-1"></i>Mettre en corbeille
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

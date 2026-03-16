@@ -1,0 +1,138 @@
+{% extends "archives/base.html" %}
+{% block title %}Nouveau bordereau d'élimination{% endblock %}
+{% block topbar_title %}Demande d'autorisation — Élimination{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+  <div class="row justify-content-center">
+    <div class="col-xl-9">
+
+      <div class="alert alert-danger border-0 shadow-sm mb-3 d-flex gap-3 align-items-start py-3">
+        <i class="bi bi-shield-exclamation fs-4 flex-shrink-0 text-danger mt-1"></i>
+        <div class="small">
+          <strong>Procédure irréversible — Visa DAS obligatoire</strong><br>
+          Conformément à la loi sénégalaise n° 2006-19 du 30 juin 2006, toute élimination d'archives
+          est subordonnée au visa préalable de la <strong>Direction des Archives du Sénégal (DAS)</strong>.
+          Ce bordereau sera soumis pour approbation avant toute destruction physique.
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} border-0 py-2 mb-3">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-info-circle me-1"></i>Informations du bordereau
+          </div>
+          <div class="card-body pb-3">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Service producteur <span class="text-danger">*</span></label>
+                <input type="text" name="service_producteur" class="form-control"
+                       value="Secrétariat ENSMG" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Observations</label>
+                <input type="text" name="observations" class="form-control" placeholder="Optionnel">
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-semibold">
+                  Motif d'élimination <span class="text-danger">*</span>
+                </label>
+                <textarea name="motif" class="form-control" rows="3" required
+                  placeholder="Ex : DUA échue (10 ans), sort final Élimination selon tableau de gestion approuvé — Correspondances de routine sans valeur historique."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-trash3 me-1 text-danger"></i>Documents proposés à l'élimination</span>
+            <span class="badge bg-danger rounded-pill">{{ docs_eligibles.count }}</span>
+          </div>
+          <div class="card-body p-0">
+            {% if docs_eligibles %}
+            <div class="p-2 border-bottom bg-light d-flex align-items-center gap-2">
+              <input type="checkbox" id="select-all" class="form-check-input"
+                     onchange="document.querySelectorAll('.doc-check').forEach(c=>c.checked=this.checked)">
+              <label for="select-all" class="form-check-label small fw-semibold mb-0">Tout sélectionner</label>
+              <span class="ms-auto text-muted small">
+                <i class="bi bi-info-circle me-1"></i>Seuls les documents avec sort final <strong>Élimination</strong> et DUA échue sont listés.
+              </span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0 align-middle" style="font-size:.84rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:40px;"></th>
+                    <th>Référence</th>
+                    <th>Titre</th>
+                    <th>Catégorie</th>
+                    <th>Localisation</th>
+                    <th>DUA échue le</th>
+                    <th>Ancienneté</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for doc in docs_eligibles %}
+                <tr>
+                  <td><input class="doc-check form-check-input" type="checkbox" name="documents" value="{{ doc.pk }}"></td>
+                  <td class="font-monospace small text-muted">{{ doc.identifiant }}</td>
+                  <td>
+                    <a href="{% url 'archives:document_detail' doc.pk %}" class="text-decoration-none" target="_blank">
+                      {{ doc.titre|truncatechars:45 }}
+                    </a>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border">{{ doc.categorie.code }}</span>
+                  </td>
+                  <td class="text-muted small">{{ doc.localisation_physique|default:"—" }}</td>
+                  <td>
+                    {% if doc.date_fin_dua %}
+                    <span class="text-danger fw-bold">{{ doc.date_fin_dua|date:"d/m/Y" }}</span>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-muted small">
+                    {% if doc.date_creation %}
+                    {{ doc.date_creation|timesince }}
+                    {% else %}—{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-check-circle fs-1 d-block mb-2 text-success opacity-50"></i>
+              <h6 class="text-muted">Aucun document éligible à l'élimination</h6>
+              <p class="small mb-0">
+                Les documents doivent avoir :<br>
+                le sort final <strong>Élimination</strong>, le statut <strong>Définitif</strong>, et la DUA échue.
+              </p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{% url 'archives:admin_bordereaux_elimination' %}" class="btn btn-outline-secondary">Annuler</a>
+          <button type="submit" class="btn btn-danger" {% if not docs_eligibles %}disabled{% endif %}>
+            <i class="bi bi-file-earmark-text me-2"></i>Créer le bordereau & soumettre à la DAS
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

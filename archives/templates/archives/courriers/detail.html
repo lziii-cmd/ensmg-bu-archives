@@ -1,0 +1,325 @@
+{% extends "archives/base.html" %}
+{% block title %}{{ courrier.numero_enregistrement }}{% endblock %}
+{% block topbar_title %}Détail du courrier{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {% include "archives/_breadcrumb.html" %}
+
+  <div class="row g-3">
+
+    {# ── Colonne gauche : fiche principale ── #}
+    <div class="col-lg-8">
+
+      {# ── Carte en-tête ── #}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+            <div>
+              {% if courrier.sens == 'ARRIVEE' %}
+                <span class="badge bg-primary fs-6 mb-1"><i class="bi bi-arrow-down-left me-1"></i>ARRIVÉE</span>
+              {% else %}
+                <span class="badge bg-success fs-6 mb-1"><i class="bi bi-arrow-up-right me-1"></i>DÉPART</span>
+              {% endif %}
+              <h5 class="fw-bold mb-1">{{ courrier.objet }}</h5>
+              <small class="text-muted">{{ courrier.numero_enregistrement }}
+                {% if courrier.reference_expediteur %}
+                  &nbsp;·&nbsp; Réf. expéditeur : {{ courrier.reference_expediteur }}
+                {% endif %}
+              </small>
+            </div>
+            <div class="d-flex gap-1 flex-wrap">
+              {% if peut_modifier and courrier.statut not in 'VERSE,ELIMINE' %}
+              <a href="{% url 'archives:courrier_modifier' courrier.pk %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i>Modifier
+              </a>
+              {% endif %}
+              {% if peut_modifier and courrier.statut not in 'VERSE,ELIMINE' %}
+              <a href="{% url 'archives:courrier_supprimer' courrier.pk %}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash3 me-1"></i>Corbeille
+              </a>
+              {% endif %}
+            </div>
+          </div>
+
+          {# Alerte retard #}
+          {% if courrier.est_en_retard %}
+          <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mt-3 mb-0">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Délai de réponse dépassé depuis le <strong>{{ courrier.delai_reponse|date:"d/m/Y" }}</strong>.</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ── Métadonnées ── #}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-info-circle me-1"></i>Informations
+        </div>
+        <div class="card-body py-2">
+          <dl class="row mb-0" style="font-size:.88rem;">
+            <dt class="col-sm-4 text-muted">Date du courrier</dt>
+            <dd class="col-sm-8">{{ courrier.date_courrier|date:"d/m/Y" }}</dd>
+
+            <dt class="col-sm-4 text-muted">Expéditeur</dt>
+            <dd class="col-sm-8">{{ courrier.expediteur }}</dd>
+
+            <dt class="col-sm-4 text-muted">Destinataire</dt>
+            <dd class="col-sm-8">{{ courrier.destinataire }}</dd>
+
+            {% if courrier.service_interne %}
+            <dt class="col-sm-4 text-muted">Service interne concerné</dt>
+            <dd class="col-sm-8">{{ courrier.service_interne }}</dd>
+            {% endif %}
+
+            {% if courrier.ampliation %}
+            <dt class="col-sm-4 text-muted">Ampliation</dt>
+            <dd class="col-sm-8">{{ courrier.ampliation }}</dd>
+            {% endif %}
+
+            <dt class="col-sm-4 text-muted">Confidentialité</dt>
+            <dd class="col-sm-8">
+              <span class="badge
+                {% if courrier.confidentialite == 'CONFIDENTIEL' %}bg-danger
+                {% elif courrier.confidentialite == 'INTERNE' %}bg-warning text-dark
+                {% else %}bg-secondary{% endif %}">
+                {{ courrier.get_confidentialite_display }}
+              </span>
+            </dd>
+
+            {% if courrier.sens == 'ARRIVEE' and courrier.delai_reponse %}
+            <dt class="col-sm-4 text-muted">Délai de réponse</dt>
+            <dd class="col-sm-8 {% if courrier.est_en_retard %}text-danger fw-bold{% endif %}">
+              {{ courrier.delai_reponse|date:"d/m/Y" }}
+            </dd>
+            {% endif %}
+
+            {% if courrier.sens == 'ARRIVEE' %}
+            <dt class="col-sm-4 text-muted">Accusé de réception</dt>
+            <dd class="col-sm-8">
+              {% if courrier.accuse_reception %}
+                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Envoyé</span>
+              {% else %}
+                <span class="badge bg-secondary">Non envoyé</span>
+              {% endif %}
+            </dd>
+            {% endif %}
+
+            {% if courrier.sens == 'DEPART' and courrier.en_reponse_a %}
+            <dt class="col-sm-4 text-muted">En réponse à</dt>
+            <dd class="col-sm-8">
+              <a href="{% url 'archives:courrier_detail' courrier.en_reponse_a.pk %}" class="text-decoration-none">
+                <i class="bi bi-reply me-1"></i>
+                {{ courrier.en_reponse_a.numero_enregistrement }} — {{ courrier.en_reponse_a.objet|truncatechars:60 }}
+              </a>
+            </dd>
+            {% endif %}
+
+            {% if courrier.localisation_physique %}
+            <dt class="col-sm-4 text-muted">Localisation physique</dt>
+            <dd class="col-sm-8"><i class="bi bi-archive me-1 text-muted"></i>{{ courrier.localisation_physique }}</dd>
+            {% endif %}
+
+            {% if courrier.mots_cles %}
+            <dt class="col-sm-4 text-muted">Mots-clés</dt>
+            <dd class="col-sm-8">
+              {% for mot in courrier.mots_cles.split %}
+              <span class="badge bg-light text-dark border">{{ mot|cut:"," }}</span>
+              {% endfor %}
+            </dd>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
+
+      {# ── Description / Instructions ── #}
+      {% if courrier.description or courrier.instructions %}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body" style="font-size:.88rem;">
+          {% if courrier.description %}
+          <h6 class="text-muted text-uppercase small mb-1">Résumé / Description</h6>
+          <p class="mb-3">{{ courrier.description }}</p>
+          {% endif %}
+          {% if courrier.instructions %}
+          <h6 class="text-muted text-uppercase small mb-1">Instructions de traitement</h6>
+          <p class="mb-0 text-info">{{ courrier.instructions }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── Courriers départ liés (réponses) ── #}
+      {% if reponses %}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-reply-all me-1"></i>Réponses envoyées
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for rep in reponses %}
+          <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+            <div>
+              <a href="{% url 'archives:courrier_detail' rep.pk %}" class="text-decoration-none fw-semibold small">
+                {{ rep.numero_enregistrement }}
+              </a>
+              <span class="text-muted small ms-2">{{ rep.objet|truncatechars:60 }}</span>
+            </div>
+            <span class="text-muted small text-nowrap">{{ rep.date_courrier|date:"d/m/Y" }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+    </div>
+
+    {# ── Colonne droite : statut + actions + journal ── #}
+    <div class="col-lg-4">
+
+      {# ── Statut + workflow ── #}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-arrow-right-circle me-1"></i>Statut & actions
+        </div>
+        <div class="card-body text-center py-3">
+          <div class="mb-3">
+            {% if courrier.statut == 'ENREGISTRE' %}
+              <span class="badge bg-secondary px-3 py-2 fs-6">Enregistré</span>
+            {% elif courrier.statut == 'EN_TRAITEMENT' %}
+              <span class="badge bg-info text-dark px-3 py-2 fs-6">En traitement</span>
+            {% elif courrier.statut == 'TRAITE' %}
+              <span class="badge bg-success px-3 py-2 fs-6">Traité</span>
+            {% elif courrier.statut == 'ARCHIVE' %}
+              <span class="badge bg-dark px-3 py-2 fs-6">Archivé</span>
+            {% elif courrier.statut == 'VERSE' %}
+              <span class="badge bg-primary px-3 py-2 fs-6">Versé</span>
+            {% elif courrier.statut == 'ELIMINE' %}
+              <span class="badge bg-danger px-3 py-2 fs-6">Éliminé</span>
+            {% endif %}
+          </div>
+
+          {% if peut_modifier %}
+          <div class="d-grid gap-2">
+            {% if courrier.statut == 'ENREGISTRE' %}
+            <form method="post" action="{% url 'archives:courrier_action' courrier.pk %}">
+              {% csrf_token %}<input type="hidden" name="action" value="en_traitement">
+              <button type="submit" class="btn btn-info btn-sm text-dark w-100">
+                <i class="bi bi-pencil-square me-1"></i>Prendre en charge
+              </button>
+            </form>
+            <form method="post" action="{% url 'archives:courrier_action' courrier.pk %}">
+              {% csrf_token %}<input type="hidden" name="action" value="traiter">
+              <button type="submit" class="btn btn-success btn-sm w-100">
+                <i class="bi bi-check-circle me-1"></i>Marquer traité
+              </button>
+            </form>
+            {% elif courrier.statut == 'EN_TRAITEMENT' %}
+            <form method="post" action="{% url 'archives:courrier_action' courrier.pk %}">
+              {% csrf_token %}<input type="hidden" name="action" value="traiter">
+              <textarea name="commentaire" class="form-control form-control-sm mb-2"
+                        rows="2" placeholder="Commentaire de traitement (optionnel)"></textarea>
+              <button type="submit" class="btn btn-success btn-sm w-100">
+                <i class="bi bi-check-circle me-1"></i>Traitement terminé
+              </button>
+            </form>
+            {% endif %}
+            {% if courrier.statut == 'TRAITE' and peut_archiver %}
+            <form method="post" action="{% url 'archives:courrier_action' courrier.pk %}">
+              {% csrf_token %}<input type="hidden" name="action" value="archiver">
+              <button type="submit" class="btn btn-dark btn-sm w-100">
+                <i class="bi bi-archive me-1"></i>Archiver définitivement
+              </button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if courrier.traite_par %}
+          <div class="mt-3 text-muted" style="font-size:.78rem;">
+            Traité par <strong>{{ courrier.traite_par.get_full_name|default:courrier.traite_par.username }}</strong>
+            {% if courrier.date_traitement %}le {{ courrier.date_traitement|date:"d/m/Y" }}{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ── Fichier joint ── #}
+      {% if courrier.fichier %}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-paperclip me-1"></i>Fichier numérique
+        </div>
+        <div class="card-body py-2" style="font-size:.85rem;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ courrier.nom_fichier_original|default:"Fichier joint" }}</div>
+              <div class="text-muted">{{ courrier.taille_lisible }}</div>
+              {% if courrier.empreinte_sha256 %}
+              <div class="text-muted" style="font-size:.7rem;">SHA-256 : {{ courrier.empreinte_sha256|truncatechars:20 }}…</div>
+              {% endif %}
+            </div>
+          </div>
+          <a href="{{ courrier.fichier.url }}" class="btn btn-outline-secondary btn-sm w-100 mt-2" target="_blank">
+            <i class="bi bi-download me-1"></i>Télécharger
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── DUA ── #}
+      {% if courrier.tableau_gestion or courrier.date_fin_dua %}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-clock-history me-1"></i>DUA & sort final
+        </div>
+        <div class="card-body py-2" style="font-size:.85rem;">
+          {% if courrier.tableau_gestion %}
+          <div class="mb-1"><span class="text-muted">TG :</span> {{ courrier.tableau_gestion }}</div>
+          {% endif %}
+          {% if courrier.date_fin_dua %}
+          <div class="mb-1"><span class="text-muted">Fin DUA :</span>
+            <strong class="{% if courrier.est_en_fin_de_dua %}text-danger{% endif %}">
+              {{ courrier.date_fin_dua|date:"d/m/Y" }}
+            </strong>
+          </div>
+          {% endif %}
+          <div><span class="text-muted">Sort final :</span>
+            <span class="badge {% if courrier.sort_final == 'CONSERVATION' %}bg-primary{% elif courrier.sort_final == 'ELIMINATION' %}bg-danger{% else %}bg-secondary{% endif %}">
+              {{ courrier.get_sort_final_display }}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── Journal d'audit ── #}
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-journal-text me-1"></i>Journal d'audit
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for mv in journal %}
+          <li class="list-group-item py-2" style="font-size:.8rem;">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold">{{ mv.get_action_display }}</span>
+              <span class="text-muted">{{ mv.date_action|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if mv.commentaire %}
+            <div class="text-muted">{{ mv.commentaire }}</div>
+            {% endif %}
+            {% if mv.utilisateur %}
+            <div class="text-muted">{{ mv.utilisateur.get_full_name|default:mv.utilisateur.username }}</div>
+            {% endif %}
+          </li>
+          {% empty %}
+          <li class="list-group-item py-2 text-muted text-center" style="font-size:.82rem;">Aucune entrée.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

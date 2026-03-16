@@ -1,0 +1,180 @@
+{% extends "archives/base.html" %}
+{% block title %}Courriers{% endblock %}
+{% block topbar_title %}Secrétariat — Courriers{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# ── En-tête ── #}
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+      <h5 class="mb-0 fw-bold">Registre des courriers</h5>
+      <small class="text-muted">Arrivée · Départ · Suivi du traitement</small>
+    </div>
+    {% if peut_modifier %}
+    <a href="{% url 'archives:courrier_enregistrer' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Enregistrer un courrier
+    </a>
+    {% endif %}
+  </div>
+
+  {# ── Indicateurs ── #}
+  {% if nb_en_retard %}
+  <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span><strong>{{ nb_en_retard }}</strong> courrier(s) arrivée dépasse(nt) le délai de réponse.</span>
+  </div>
+  {% endif %}
+
+  {# ── Filtres ── #}
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+      <input type="search" name="q" class="form-control form-control-sm"
+             placeholder="Objet, expéditeur, numéro…" value="{{ q }}">
+    </div>
+    <div class="col-md-2">
+      <select name="sens" class="form-select form-select-sm">
+        <option value="">Tous les sens</option>
+        <option value="ARRIVEE" {% if sens_filtre == 'ARRIVEE' %}selected{% endif %}>Arrivée</option>
+        <option value="DEPART"  {% if sens_filtre == 'DEPART'  %}selected{% endif %}>Départ</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="statut" class="form-select form-select-sm">
+        <option value="">Tous les statuts</option>
+        {% for val, label in STATUTS %}
+        <option value="{{ val }}" {% if statut_filtre == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+        <i class="bi bi-funnel me-1"></i>Filtrer
+      </button>
+    </div>
+    {% if q or sens_filtre or statut_filtre %}
+    <div class="col-md-2">
+      <a href="{% url 'archives:courrier_liste' %}" class="btn btn-outline-danger btn-sm w-100">
+        <i class="bi bi-x-circle me-1"></i>Effacer
+      </a>
+    </div>
+    {% endif %}
+  </form>
+
+  {# ── Tableau ── #}
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      {% if courriers %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:.87rem;">
+          <thead class="table-light">
+            <tr>
+              <th style="width:36px;"></th>
+              <th>Numéro</th>
+              <th>Objet</th>
+              <th>Expéditeur / Destinataire</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in courriers %}
+            <tr class="{% if c.est_en_retard %}table-warning{% endif %}">
+              <td class="text-center ps-3">
+                {% if c.sens == 'ARRIVEE' %}
+                  <span class="badge bg-primary" title="Arrivée"><i class="bi bi-arrow-down-left"></i></span>
+                {% else %}
+                  <span class="badge bg-success" title="Départ"><i class="bi bi-arrow-up-right"></i></span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'archives:courrier_detail' c.pk %}" class="fw-semibold text-decoration-none small">
+                  {{ c.numero_enregistrement }}
+                </a>
+                {% if c.est_en_retard %}
+                  <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">En retard</span>
+                {% endif %}
+                {% if c.en_reponse_a %}
+                  <br><small class="text-muted">↳ Rép. à {{ c.en_reponse_a.numero_enregistrement }}</small>
+                {% endif %}
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width:280px;" title="{{ c.objet }}">{{ c.objet }}</div>
+                {% if c.service_interne %}
+                  <small class="text-muted"><i class="bi bi-building me-1"></i>{{ c.service_interne }}</small>
+                {% endif %}
+              </td>
+              <td class="text-muted small">
+                {% if c.sens == 'ARRIVEE' %}
+                  <i class="bi bi-person-fill me-1"></i>{{ c.expediteur|truncatechars:35 }}
+                {% else %}
+                  <i class="bi bi-send me-1"></i>{{ c.destinataire|truncatechars:35 }}
+                {% endif %}
+              </td>
+              <td class="text-muted small text-nowrap">
+                {{ c.date_courrier|date:"d/m/Y" }}
+                {% if c.sens == 'ARRIVEE' and c.delai_reponse %}
+                  <br><span class="{% if c.est_en_retard %}text-danger{% else %}text-muted{% endif %}">
+                    délai : {{ c.delai_reponse|date:"d/m/Y" }}
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if c.statut == 'ENREGISTRE' %}
+                  <span class="badge bg-secondary">Enregistré</span>
+                {% elif c.statut == 'EN_TRAITEMENT' %}
+                  <span class="badge bg-info text-dark">En traitement</span>
+                {% elif c.statut == 'TRAITE' %}
+                  <span class="badge bg-success">Traité</span>
+                {% elif c.statut == 'ARCHIVE' %}
+                  <span class="badge bg-dark">Archivé</span>
+                {% elif c.statut == 'VERSE' %}
+                  <span class="badge bg-primary">Versé</span>
+                {% elif c.statut == 'ELIMINE' %}
+                  <span class="badge bg-danger">Éliminé</span>
+                {% endif %}
+              </td>
+              <td class="text-end pe-3">
+                <a href="{% url 'archives:courrier_detail' c.pk %}" class="btn btn-sm btn-outline-secondary" title="Consulter">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if peut_modifier and c.statut not in 'VERSE,ELIMINE' %}
+                <a href="{% url 'archives:courrier_modifier' c.pk %}" class="btn btn-sm btn-outline-primary" title="Modifier">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-envelope-slash" style="font-size:2.5rem;"></i>
+        <p class="mt-2 mb-0">Aucun courrier trouvé{% if q or sens_filtre or statut_filtre %} pour ces critères{% endif %}.</p>
+        {% if peut_modifier %}
+        <a href="{% url 'archives:courrier_enregistrer' %}" class="btn btn-primary btn-sm mt-3">
+          <i class="bi bi-plus-lg me-1"></i>Enregistrer le premier courrier
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Liens bordereaux (archiviste seulement) ── #}
+  {% if est_gestionnaire %}
+  <div class="d-flex gap-2 mt-3 flex-wrap">
+    <a href="{% url 'archives:courrier_bv_liste' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-up-circle me-1"></i>Bordereaux de versement
+    </a>
+    <a href="{% url 'archives:courrier_be_liste' %}" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-trash3 me-1"></i>Bordereaux d'élimination
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "archives/base.html" %}
+{% block title %}Token {{ token.auditeur_nom }}{% endblock %}
+{% block topbar_title %}Token d'audit — {{ token.auditeur_nom }}{% endblock %}
+
+{% block content %}
+{% include "archives/_breadcrumb.html" %}
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">{{ token.auditeur_nom }}</h5>
+            <p class="text-muted small mb-0">{{ token.description }}</p>
+          </div>
+          {% if token.est_valide %}
+            <span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Actif — {{ token.jours_restants }}j restants</span>
+          {% elif not token.actif %}
+            <span class="badge bg-secondary fs-6 px-3 py-2">Révoqué</span>
+          {% else %}
+            <span class="badge bg-danger fs-6 px-3 py-2">Expiré</span>
+          {% endif %}
+        </div>
+
+        <table class="table table-sm mb-0">
+          <tr><th class="text-muted fw-normal">Auditeur</th><td>{{ token.auditeur_nom }}</td></tr>
+          <tr><th class="text-muted fw-normal">Email</th><td>{{ token.auditeur_email|default:"—" }}</td></tr>
+          <tr><th class="text-muted fw-normal">Valide du</th><td>{{ token.date_debut|date:"d/m/Y H:i" }} au {{ token.date_expiration|date:"d/m/Y H:i" }}</td></tr>
+          <tr><th class="text-muted fw-normal">Périmètre</th><td>{{ token.get_perimetre_display }}</td></tr>
+          <tr><th class="text-muted fw-normal">Conf. max</th><td>{{ token.get_confidentialite_max_display }}</td></tr>
+          <tr><th class="text-muted fw-normal">Consultations</th><td>{{ token.nb_consultations }}</td></tr>
+          <tr><th class="text-muted fw-normal">Dernière visite</th><td>{{ token.derniere_consultation|date:"d/m/Y H:i"|default:"Jamais" }}</td></tr>
+          <tr><th class="text-muted fw-normal">Créé par</th><td>{{ token.cree_par }}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    {% if token.est_valide %}
+    <div class="card border-0 shadow-sm border-success">
+      <div class="card-header bg-success bg-opacity-10 border-bottom py-3">
+        <h6 class="mb-0 fw-semibold text-success"><i class="bi bi-link-45deg me-2"></i>Lien de partage</h6>
+      </div>
+      <div class="card-body">
+        <div class="bg-light rounded p-3 font-monospace small mb-3 text-break">
+          {{ request.scheme }}://{{ request.get_host }}/audit/{{ token.token }}/
+        </div>
+        <button class="btn btn-success w-100"
+                onclick="navigator.clipboard.writeText('{{ request.scheme }}://{{ request.get_host }}/audit/{{ token.token }}/');this.innerHTML='<i class=\'bi bi-check-circle me-2\'></i>Lien copié !'">
+          <i class="bi bi-clipboard me-2"></i>Copier le lien
+        </button>
+        <div class="text-muted small text-center mt-2">
+          Ce lien donne accès sans authentification. Ne le partagez qu'avec l'auditeur concerné.
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    {% if token.actif %}
+    <div class="card border-0 shadow-sm border-danger">
+      <div class="card-header bg-danger bg-opacity-10 border-bottom py-3">
+        <h6 class="mb-0 fw-semibold text-danger"><i class="bi bi-shield-x me-2"></i>Révoquer ce token</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small">
+          La révocation est immédiate : le lien ne fonctionnera plus. Utilisez cette option si la mission est terminée ou compromise.
+        </p>
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="revoquer">
+          <button type="submit" class="btn btn-outline-danger w-100"
+                  onclick="return confirm('Révoquer ce token ? L\'auditeur perdra immédiatement l\'accès.')">
+            <i class="bi bi-shield-x me-2"></i>Révoquer maintenant
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-list-check me-2"></i>Périmètre détaillé</h6>
+      </div>
+      <div class="card-body small">
+        {% if token.perimetre == 'TOUS' %}
+          <p class="text-muted">Tous les documents avec confidentialité ≤ {{ token.get_confidentialite_max_display }}</p>
+        {% elif token.perimetre == 'CATEGORIE' %}
+          <strong>Catégories :</strong>
+          {% for cat in token.categories.all %}<span class="badge bg-light text-dark border me-1">{{ cat.code }}</span>{% empty %}<em class="text-muted">Aucune</em>{% endfor %}
+        {% elif token.perimetre == 'PLAN' %}
+          <strong>Plans :</strong>
+          {% for plan in token.plans.all %}<div class="text-muted">{{ plan }}</div>{% empty %}<em class="text-muted">Aucun</em>{% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

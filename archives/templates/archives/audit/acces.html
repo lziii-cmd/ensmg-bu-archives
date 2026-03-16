@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accès auditeur — Archives ENSMG</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-light bg-white border-bottom shadow-sm">
+  <div class="container">
+    <span class="navbar-brand fw-bold">
+      <i class="bi bi-archive-fill me-2 text-primary"></i>Archives ENSMG
+      <span class="badge bg-info ms-2">Mode Auditeur</span>
+    </span>
+    <div class="text-muted small d-flex align-items-center gap-3">
+      <span><i class="bi bi-person me-1"></i>{{ token.auditeur_nom }}</span>
+      <span><i class="bi bi-clock me-1"></i>Expire le {{ token.date_expiration|date:"d/m/Y H:i" }}</span>
+      <span class="badge bg-warning text-dark">{{ token.jours_restants }}j restants</span>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <div class="alert alert-info border-0 shadow-sm mb-4 d-flex gap-3 align-items-start">
+    <i class="bi bi-info-circle fs-4 flex-shrink-0 mt-1"></i>
+    <div class="small">
+      <strong>Accès temporaire en lecture seule</strong> — Mission : {{ token.description }}<br>
+      Périmètre : {{ token.get_perimetre_display }} — Confidentialité max : {{ token.get_confidentialite_max_display }}<br>
+      Cet accès est journalisé. {{ nb_docs }} document(s) accessible(s).
+    </div>
+  </div>
+
+  <h5 class="fw-bold mb-3"><i class="bi bi-folder2-open me-2"></i>Documents accessibles ({{ nb_docs }})</h5>
+
+  {% if docs %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle small">
+          <thead class="table-light">
+            <tr>
+              <th>Référence</th><th>Titre</th><th>Catégorie</th>
+              <th>Date</th><th>Confidentialité</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for doc in docs %}
+          <tr>
+            <td class="font-monospace text-muted" style="font-size:.7rem">{{ doc.identifiant }}</td>
+            <td>{{ doc.titre|truncatechars:55 }}</td>
+            <td><span class="badge bg-light text-dark border">{{ doc.categorie.code }}</span></td>
+            <td>{{ doc.date_creation|date:"d/m/Y" }}</td>
+            <td>
+              {% if doc.confidentialite == 'PUBLIC' %}<span class="badge bg-success">Public</span>
+              {% elif doc.confidentialite == 'INTERNE' %}<span class="badge bg-secondary">Interne</span>
+              {% elif doc.confidentialite == 'CONFIDENTIEL' %}<span class="badge bg-warning text-dark">Confidentiel</span>
+              {% elif doc.confidentialite == 'SECRET' %}<span class="badge bg-danger">Secret</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if doc.fichier %}
+              <a href="{% url 'archives:document_viewer' doc.pk %}" target="_blank"
+                 class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>Consulter
+              </a>
+              {% else %}
+              <span class="text-muted small">Papier uniquement</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5 text-muted">
+      <i class="bi bi-folder2 fs-2 d-block mb-2 opacity-50"></i>
+      Aucun document accessible avec ce périmètre.
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

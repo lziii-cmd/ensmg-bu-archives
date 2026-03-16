@@ -1,0 +1,368 @@
+{% extends "archives/base.html" %}
+{% load archives_extras %}
+{% block title %}{{ bv.numero }} — Bordereau de versement{% endblock %}
+{% block topbar_title %}Bordereau {{ bv.numero }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  {% include "archives/_breadcrumb.html" %}
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show border-0 shadow-sm py-2 mb-3" role="alert">
+    {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    <!-- Colonne principale : document institutionnel -->
+    <div class="col-lg-8">
+      <!-- Bordereau institutionnel -->
+      <div class="card border-0 shadow-sm mb-3" id="bordereau-print">
+        <div class="card-body p-4">
+
+          <!-- En-tête institutionnelle ENSMG -->
+          <div class="border rounded-2 p-3 mb-4" style="background:#f8f9fc;">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="text-center text-uppercase fw-bold" style="font-size:.78rem; letter-spacing:.06rem; color:#555;">
+                  République du Sénégal
+                </div>
+                <div class="text-center text-muted" style="font-size:.7rem;">
+                  Un Peuple — Un But — Une Foi
+                </div>
+                <div class="text-center text-muted" style="font-size:.7rem;">
+                  Ministère des Mines et de la Géologie
+                </div>
+                <hr class="my-2" style="border-color:#ccc;">
+                <div class="text-center fw-bold" style="font-size:1rem; color:#1a3a5c; letter-spacing:.02rem;">
+                  École Nationale Supérieure des Mines et de la Géologie
+                </div>
+                <div class="text-center text-muted" style="font-size:.72rem;">
+                  ENSMG — Thiès, Sénégal
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="border rounded p-2 d-inline-block text-start" style="background:#fff; min-width:160px;">
+                  <div class="text-muted" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.05rem;">N° Bordereau</div>
+                  <div class="fw-bold font-monospace" style="font-size:.85rem; color:#1a3a5c;">{{ bv.numero }}</div>
+                  <div class="text-muted mt-1" style="font-size:.65rem;">Date : {{ bv.date_creation|date:"d/m/Y" }}</div>
+                  {% if bv.exercice %}
+                  <div class="text-muted" style="font-size:.65rem;">Exercice : <strong>{{ bv.exercice }}</strong></div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center py-2 mt-3 border-top border-bottom"
+                 style="background:#1a3a5c; color:#fff; margin:0 -1px; border-radius:4px; letter-spacing:.08rem;">
+              <span class="fw-bold text-uppercase" style="font-size:.9rem;">
+                Bordereau de Versement d'Archives
+              </span>
+            </div>
+
+            <div class="row g-2 mt-2 small">
+              <div class="col-sm-6">
+                <span class="text-muted">Service versant :</span>
+                <strong class="ms-1">{{ bv.service_versant }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Service destinataire :</span>
+                <strong class="ms-1">{{ bv.service_destinataire }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Archiviste responsable :</span>
+                <strong class="ms-1">{{ bv.cree_par.get_full_name|default:bv.cree_par.username }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Date d'établissement :</span>
+                <strong class="ms-1">{{ bv.date_creation|date:"d/m/Y" }}</strong>
+              </div>
+              {% if bv.valide_par %}
+              <div class="col-sm-6">
+                <span class="text-muted">Validé par :</span>
+                <strong class="ms-1">{{ bv.valide_par.get_full_name|default:bv.valide_par.username }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Date validation :</span>
+                <strong class="ms-1">{{ bv.date_validation|date:"d/m/Y" }}</strong>
+              </div>
+              {% endif %}
+              {% if bv.observations %}
+              <div class="col-12">
+                <span class="text-muted">Observations :</span>
+                <span class="ms-1 fst-italic">{{ bv.observations }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Inventaire chronologique -->
+          <h6 class="fw-semibold text-uppercase small text-muted mb-2">
+            <i class="bi bi-list-ol me-1"></i>
+            Inventaire chronologique des dépôts
+            <span class="badge bg-primary rounded-pill ms-2">{{ depots|length }}</span>
+          </h6>
+
+          {% if depots %}
+          <div class="table-responsive mb-4">
+            <table class="table table-bordered table-hover mb-0 align-middle" style="font-size:.79rem;">
+              <thead style="background:#1a3a5c; color:#fff;">
+                <tr>
+                  <th class="text-center" style="width:36px;">#</th>
+                  <th>Localisation</th>
+                  <th>Code / Référence</th>
+                  <th>Titre du document</th>
+                  <th>Agent versant</th>
+                  <th class="text-nowrap">Date dépôt</th>
+                  <th>Catégorie</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for depot in depots %}
+              <tr>
+                <td class="text-center text-muted fw-semibold">{{ forloop.counter }}</td>
+                <td class="font-monospace small text-muted">
+                  {% if depot.document_archive and depot.document_archive.localisation_physique %}
+                    {{ depot.document_archive.localisation_physique }}
+                  {% else %}
+                    <span class="fst-italic text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td class="font-monospace small">
+                  {% if depot.document_archive %}
+                    {{ depot.document_archive.identifiant }}
+                  {% else %}
+                    DEP-{{ depot.pk }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if depot.document_archive %}
+                    <a href="{% url 'archives:document_detail' depot.document_archive.pk %}" class="text-decoration-none">
+                      {{ depot.document_archive.titre|truncatechars:60 }}
+                    </a>
+                  {% else %}
+                    {{ depot.description|truncatechars:60 }}
+                  {% endif %}
+                </td>
+                <td class="text-nowrap">
+                  {% if depot.agent %}
+                    {{ depot.agent.get_full_name|default:depot.agent.username }}
+                    {% if depot.agent.departement %}
+                    <div class="text-muted" style="font-size:.7rem;">{{ depot.agent.departement.nom }}</div>
+                    {% endif %}
+                  {% else %}—{% endif %}
+                </td>
+                <td class="text-nowrap text-muted">{{ depot.date_depot|date:"d/m/Y" }}</td>
+                <td>
+                  {% if depot.categorie %}
+                    <span class="badge bg-light text-dark border">{{ depot.categorie.code }}</span>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              </tbody>
+              <tfoot class="table-light fw-semibold small">
+                <tr>
+                  <td colspan="4">Total : {{ depots|length }} dépôt(s) pour l'exercice {{ bv.exercice }}</td>
+                  <td colspan="3" class="text-muted text-end">Loi 2006-19 — Sénégal</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          {% else %}
+          <!-- Fallback : documents liés directement -->
+          <div class="table-responsive mb-4">
+            <table class="table table-bordered table-hover mb-0 align-middle" style="font-size:.79rem;">
+              <thead style="background:#1a3a5c; color:#fff;">
+                <tr>
+                  <th class="text-center" style="width:36px;">#</th>
+                  <th>Référence</th><th>Titre</th><th>Catégorie</th><th>Plan de classement</th><th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for doc in bv.documents.all %}
+              <tr>
+                <td class="text-center text-muted fw-semibold">{{ forloop.counter }}</td>
+                <td class="font-monospace small text-muted">{{ doc.identifiant }}</td>
+                <td><a href="{% url 'archives:document_detail' doc.pk %}" class="text-decoration-none">{{ doc.titre|truncatechars:50 }}</a></td>
+                <td><span class="badge bg-light text-dark border">{{ doc.categorie.code }}</span></td>
+                <td class="text-muted">{{ doc.plan_classement|default:"—"|truncatechars:25 }}</td>
+                <td class="text-muted">{{ doc.date_creation|date:"d/m/Y" }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">Aucun document associé</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          <!-- Bloc signatures -->
+          <div class="row g-4 mt-1 small">
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">L'archiviste</div>
+                <div style="height:48px;"></div>
+                <div class="fw-semibold">{{ bv.cree_par.get_full_name|default:bv.cree_par.username }}</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature &amp; Cachet</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">Le Chef de service versant</div>
+                <div style="height:48px;"></div>
+                <div class="fw-semibold">{{ bv.service_versant }}</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature &amp; Cachet</div>
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="border-top pt-3">
+                <div class="text-muted mb-1">Le Directeur ENSMG</div>
+                <div style="height:48px;"></div>
+                <div class="fw-semibold">Direction générale</div>
+                <div class="text-muted" style="font-size:.7rem;">Signature &amp; Cachet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-top d-flex justify-content-between align-items-center py-2">
+          <span class="text-muted small">
+            <i class="bi bi-shield-check me-1 text-success"></i>
+            Conforme à la Loi sénégalaise n° 2006-19 du 30 juin 2006
+          </span>
+          <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne droite : workflow -->
+    <div class="col-lg-4">
+      <!-- Statut & workflow -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-diagram-2 me-1"></i>Workflow
+        </div>
+        <div class="card-body pt-2 pb-3">
+          <!-- Indicateur de progression -->
+          <div class="d-flex align-items-center justify-content-between mb-3" style="font-size:.75rem;">
+            {% with statuts='BROUILLON,EN_VALIDATION,VALIDE,EXECUTE'|split:"," %}
+            {% for s in statuts %}
+            <div class="text-center flex-fill">
+              <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1
+                {% if bv.statut == s %}bg-primary text-white
+                {% elif bv.statut == 'EXECUTE' or bv.statut == 'VALIDE' and s == 'BROUILLON' or bv.statut == 'VALIDE' and s == 'EN_VALIDATION' or bv.statut == 'EN_VALIDATION' and s == 'BROUILLON' %}bg-success text-white
+                {% else %}bg-light text-muted border{% endif %}"
+                   style="width:28px;height:28px;">
+                {% if s == 'BROUILLON' %}<i class="bi bi-pencil" style="font-size:.6rem;"></i>
+                {% elif s == 'EN_VALIDATION' %}<i class="bi bi-hourglass-split" style="font-size:.6rem;"></i>
+                {% elif s == 'VALIDE' %}<i class="bi bi-check-circle" style="font-size:.6rem;"></i>
+                {% elif s == 'EXECUTE' %}<i class="bi bi-check-all" style="font-size:.6rem;"></i>
+                {% endif %}
+              </div>
+              <div class="text-muted" style="font-size:.65rem; white-space:nowrap;">
+                {% if s == 'BROUILLON' %}Brouillon
+                {% elif s == 'EN_VALIDATION' %}Validation
+                {% elif s == 'VALIDE' %}Validé
+                {% elif s == 'EXECUTE' %}Exécuté
+                {% endif %}
+              </div>
+            </div>
+            {% if not forloop.last %}<div class="flex-shrink-0 text-muted" style="font-size:.65rem;">›</div>{% endif %}
+            {% endfor %}
+            {% endwith %}
+          </div>
+
+          <!-- Statut courant -->
+          <div class="text-center mb-3">
+            {% if bv.statut == 'BROUILLON' %}<span class="badge bg-secondary px-3 py-2">Brouillon</span>
+            {% elif bv.statut == 'EN_VALIDATION' %}<span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-hourglass-split me-1"></i>En validation</span>
+            {% elif bv.statut == 'VALIDE' %}<span class="badge bg-info text-dark px-3 py-2"><i class="bi bi-check-circle me-1"></i>Validé</span>
+            {% elif bv.statut == 'EXECUTE' %}<span class="badge bg-success px-3 py-2"><i class="bi bi-check-all me-1"></i>Versement exécuté</span>
+            {% elif bv.statut == 'REJETE' %}<span class="badge bg-danger px-3 py-2"><i class="bi bi-x-circle me-1"></i>Rejeté</span>
+            {% endif %}
+          </div>
+
+          <!-- Boutons d'action -->
+          <form method="post" class="d-grid gap-2">
+            {% csrf_token %}
+            {% if bv.statut == 'BROUILLON' %}
+            <button type="submit" name="action" value="soumettre" class="btn btn-warning btn-sm">
+              <i class="bi bi-send me-1"></i>Soumettre pour validation
+            </button>
+            {% elif bv.statut == 'EN_VALIDATION' and est_admin %}
+            <button type="submit" name="action" value="valider" class="btn btn-success btn-sm">
+              <i class="bi bi-check2-circle me-1"></i>Valider le bordereau
+            </button>
+            <button type="submit" name="action" value="rejeter" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('Rejeter ce bordereau ?')">
+              <i class="bi bi-x-circle me-1"></i>Rejeter
+            </button>
+            {% elif bv.statut == 'VALIDE' %}
+            <div class="alert alert-info py-2 small mb-1">
+              <i class="bi bi-info-circle me-1"></i>Bordereau validé — prêt pour exécution du versement.
+            </div>
+            <button type="submit" name="action" value="executer" class="btn btn-primary btn-sm"
+                    onclick="return confirm('Exécuter le versement ?\nLes dépôts seront marqués comme versés.')">
+              <i class="bi bi-check-all me-1"></i>Marquer versement exécuté
+            </button>
+            {% elif bv.statut == 'EXECUTE' %}
+            <div class="text-center text-success py-2">
+              <i class="bi bi-check-circle-fill fs-4 d-block mb-1"></i>
+              <p class="mb-0 small">Versement exécuté le {{ bv.date_validation|date:"d/m/Y"|default:"—" }}</p>
+            </div>
+            {% elif bv.statut == 'REJETE' %}
+            <div class="text-center text-danger py-2">
+              <i class="bi bi-x-circle-fill fs-4 d-block mb-1"></i>
+              <p class="mb-0 small">Bordereau rejeté</p>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+
+      <!-- Métadonnées -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-2 fw-semibold small text-uppercase text-muted">
+          <i class="bi bi-info-circle me-1"></i>Informations
+        </div>
+        <div class="card-body pb-2" style="font-size:.84rem;">
+          <dl class="row mb-0">
+            <dt class="col-sm-5 text-muted">Numéro</dt>
+            <dd class="col-sm-7 font-monospace small">{{ bv.numero }}</dd>
+            <dt class="col-sm-5 text-muted">Exercice</dt>
+            <dd class="col-sm-7">{{ bv.exercice|default:"—" }}</dd>
+            <dt class="col-sm-5 text-muted">Service versant</dt>
+            <dd class="col-sm-7">{{ bv.service_versant }}</dd>
+            <dt class="col-sm-5 text-muted">Créé par</dt>
+            <dd class="col-sm-7">{{ bv.cree_par.get_full_name|default:bv.cree_par.username }}</dd>
+            <dt class="col-sm-5 text-muted">Date</dt>
+            <dd class="col-sm-7">{{ bv.date_creation|date:"d/m/Y" }}</dd>
+            {% if bv.valide_par %}
+            <dt class="col-sm-5 text-muted">Validé par</dt>
+            <dd class="col-sm-7">{{ bv.valide_par.get_full_name|default:bv.valide_par.username }}</dd>
+            {% endif %}
+            <dt class="col-sm-5 text-muted">Dépôts inclus</dt>
+            <dd class="col-sm-7">
+              <span class="badge bg-primary rounded-pill">{{ depots|length }}</span>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  .sidebar, .topbar, .card-footer .btn, form[method=post], .breadcrumb, .col-lg-4 { display: none !important; }
+  .col-lg-8 { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+  .container-fluid { padding: 0 !important; }
+  #bordereau-print { box-shadow: none !important; }
+}
+</style>
+{% endblock %}

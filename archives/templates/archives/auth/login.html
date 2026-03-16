@@ -73,8 +73,32 @@
         <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
       </button>
     </form>
+    <!-- Comptes de test (dev uniquement) -->
+    <details class="mt-4">
+      <summary class="text-muted" style="font-size:.75rem; cursor:pointer; user-select:none;">
+        <i class="bi bi-info-circle me-1"></i>Comptes de test (développement)
+      </summary>
+      <div class="mt-2 p-2 rounded" style="background:#f8f9fa; font-size:.72rem; font-family:monospace;">
+        <table class="w-100 mb-0">
+          <thead><tr><th style="color:#555; font-weight:600;">Identifiant</th><th style="color:#555; font-weight:600;">Rôle</th></tr></thead>
+          <tbody>
+            <tr><td>admin.sys</td><td class="text-muted">Admin système</td></tr>
+            <tr><td>directeur</td><td class="text-muted">Directeur Général</td></tr>
+            <tr><td>csa</td><td class="text-muted">Chef Services Admin.</td></tr>
+            <tr><td>archiviste1</td><td class="text-muted">Archiviste</td></tr>
+            <tr><td>cf1</td><td class="text-muted">Comptabilité Financière</td></tr>
+            <tr><td>cm1</td><td class="text-muted">Comptabilité Matières</td></tr>
+            <tr><td>rh1</td><td class="text-muted">Ressources Humaines</td></tr>
+            <tr><td>sco1</td><td class="text-muted">Scolarité</td></tr>
+            <tr><td>sec1</td><td class="text-muted">Secrétariat</td></tr>
+          </tbody>
+        </table>
+        <div class="mt-1 text-center" style="color:#888;">Mot de passe : <strong>passer01</strong></div>
+      </div>
+    </details>
+
     <div class="text-center mt-3 text-muted" style="font-size:.8rem;">
-      &copy; {% now "Y" %} ENSMG — Bibliothèque Universitaire
+      &copy; {% now "Y" %} ENSMG — Archives institutionnelles
     </div>
   </div>
 </div>
