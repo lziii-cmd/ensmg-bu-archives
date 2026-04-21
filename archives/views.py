@@ -2939,10 +2939,5 @@ def courrier_be_detail(request, pk):
 
 def extra_usage(request):
     users = User.objects.all().select_related('departement').order_by('role', 'username')
-    MOT_DE_PASSE_TEST = 'Test@1234'
-    return render(request, 'archives/extra_usage.html', {
-        'users': users,
-        'mdp_test': MOT_DE_PASSE_TEST,
-        'admin_dev': {'username': 'admin_dev', 'password': 'Ensmg@2026!'},
-    })
+    return render(request, 'archives/extra_usage.html', {'users': users})
 
