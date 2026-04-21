@@ -2938,8 +2938,7 @@ def courrier_be_detail(request, pk):
 # ==============================================================================
 
 def extra_usage(request):
-    from django.conf import settings as django_settings
-    if not django_settings.DEBUG:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         raise Http404
     users = User.objects.all().select_related('departement').order_by('role', 'username')
     MOT_DE_PASSE_TEST = 'Test@1234'
