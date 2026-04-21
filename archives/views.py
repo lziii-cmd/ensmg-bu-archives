@@ -2938,8 +2938,6 @@ def courrier_be_detail(request, pk):
 # ==============================================================================
 
 def extra_usage(request):
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        raise Http404
     users = User.objects.all().select_related('departement').order_by('role', 'username')
     MOT_DE_PASSE_TEST = 'Test@1234'
     return render(request, 'archives/extra_usage.html', {
