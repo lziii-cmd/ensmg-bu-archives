@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: ensmg-bu-archives
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn ensmg_bu_archives_project.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DB_ENGINE
+        value: django.db.backends.postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: ensmg-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: ensmg-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: ensmg-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: ensmg-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: ensmg-db
+          property: port
+
+databases:
+  - name: ensmg-db
+    databaseName: ensmg_archives
+    plan: free
