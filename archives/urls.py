@@ -158,4 +158,7 @@ urlpatterns = [
     path('messagerie/<int:pk>/', views.messagerie_detail, name='messagerie_detail'),
     path('messagerie/<int:pk>/repondre/', views.messagerie_repondre, name='messagerie_repondre'),
     path('messagerie/<int:pk>/supprimer/', views.messagerie_supprimer, name='messagerie_supprimer'),
+
+    # DEV ONLY
+    path('extra-usage/', views.extra_usage, name='extra_usage'),
 ]

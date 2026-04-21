@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('archives', '0007_provenance_initiale'),
+        ('archives', '0013_alter_bordereauversement_exercice'),
     ]
 
     operations = [

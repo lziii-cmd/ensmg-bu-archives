@@ -2,24 +2,19 @@
 Paramètres Django — Système de Gestion des Archives ENSMG
 Conformes à la norme ISO 15489 et à la loi sénégalaise n° 2006-19.
 
-⚠ Configuration de DÉVELOPPEMENT uniquement.
-Pour la production : désactiver DEBUG, sécuriser SECRET_KEY via variable d'environnement,
-passer sur PostgreSQL et configurer un stockage S3 pour les fichiers.
+Configuration via variables d'environnement (.env / python-decouple).
+Copier .env.example en .env et adapter les valeurs.
 """
 
-import os
 from pathlib import Path
+from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Sécurité ---
-# ⚠ À remplacer par : SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-SECRET_KEY = 'django-insecure-fc)a$j_l(2jp-8n)k=f^k%j3cduv4&r1d@0hnm!x_)8on4g&qp'
-
-# ⚠ Passer à False en production
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
+SECRET_KEY    = config('DJANGO_SECRET_KEY')
+DEBUG         = config('DJANGO_DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 
 # --- Applications installées ---
@@ -67,23 +62,27 @@ WSGI_APPLICATION = 'ensmg_bu_archives_project.wsgi.application'
 
 
 # --- Base de données ---
-# ⚠ Remplacer par PostgreSQL en production :
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME', 'ensmg_archives'),
-#         'USER': os.environ.get('DB_USER', 'postgres'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD'),
-#         'HOST': os.environ.get('DB_HOST', 'localhost'),
-#         'PORT': os.environ.get('DB_PORT', '5432'),
-#     }
-# }
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+_db_engine = config('DB_ENGINE', default='django.db.backends.sqlite3')
+_db_name   = config('DB_NAME', default=str(BASE_DIR / 'db.sqlite3'))
+
+if _db_engine == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': _db_engine,
+            'NAME': BASE_DIR / _db_name if not _db_name.startswith('/') else _db_name,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': _db_engine,
+            'NAME': _db_name,
+            'USER':     config('DB_USER',     default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST':     config('DB_HOST',     default='localhost'),
+            'PORT':     config('DB_PORT',     default='5432'),
+        }
+    }
 
 
 # --- Modèle utilisateur personnalisé ---

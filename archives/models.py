@@ -3,9 +3,6 @@ Modèles du système de gestion des archives de l'ENSMG.
 Conformes à la norme ISO 15489 et à la loi sénégalaise n° 2006-19.
 """
 
-import hashlib
-import uuid
-
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -265,45 +262,25 @@ class Document(models.Model):
             ('can_view_secret',        'Peut consulter les documents secrets'),
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Mémorise le nom du fichier à l'instanciation pour détecter les remplacements
+        self._fichier_nom_original = self.fichier.name if self.fichier else None
+
+    def _fichier_a_change(self) -> bool:
+        """Retourne True si le fichier a été ajouté ou remplacé depuis le chargement."""
+        nom_actuel = self.fichier.name if self.fichier else None
+        return nom_actuel != self._fichier_nom_original or not self.empreinte_sha256
+
     def __str__(self):
         return f"[{self.identifiant}] {self.titre}"
 
-    # --- Logique métier dans save() ---
-
     def save(self, *args, **kwargs):
-        # 1. Génération de l'identifiant pérenne (unique, immuable)
-        if not self.identifiant:
-            annee       = self.date_creation.year if self.date_creation else timezone.now().year
-            code_cat    = self.categorie.code if self.categorie_id else 'GEN'
-            uid         = uuid.uuid4().hex[:8].upper()
-            self.identifiant = f"ENSMG-{annee}-{code_cat}-{uid}"
-
-        # 2. Calcul automatique de la date de fin de DUA
-        if self.tableau_gestion and self.date_creation and not self.date_fin_dua:
-            duree = self.tableau_gestion.duree_totale
-            try:
-                self.date_fin_dua = self.date_creation.replace(
-                    year=self.date_creation.year + duree
-                )
-            except ValueError:
-                # Cas du 29 février sur une année non bissextile
-                self.date_fin_dua = self.date_creation.replace(
-                    year=self.date_creation.year + duree, day=28
-                )
-
-        # 3. Calcul de l'empreinte SHA-256 et métadonnées du fichier
-        if self.fichier and not self.empreinte_sha256:
-            try:
-                sha256 = hashlib.sha256()
-                for chunk in self.fichier.chunks():
-                    sha256.update(chunk)
-                self.empreinte_sha256     = sha256.hexdigest()
-                self.taille_fichier       = self.fichier.size
-                self.nom_fichier_original = self.fichier.name.split('/')[-1]
-            except Exception:
-                pass
-
+        from archives.services import DocumentService
+        DocumentService.preparer_sauvegarde(self)
         super().save(*args, **kwargs)
+        # Met à jour le nom mémorisé après sauvegarde
+        self._fichier_nom_original = self.fichier.name if self.fichier else None
 
     # --- Propriétés utiles ---
 

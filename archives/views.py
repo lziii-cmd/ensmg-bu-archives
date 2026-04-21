@@ -2930,3 +2930,22 @@ def courrier_be_detail(request, pk):
                        ('Éliminations', 'archives:courrier_be_liste'),
                        (be.numero, None)],
     })
+
+
+# ==============================================================================
+# DEV ONLY — Page /extra-usage : liste des comptes de test
+# Accessible uniquement si DEBUG=True
+# ==============================================================================
+
+def extra_usage(request):
+    from django.conf import settings as django_settings
+    if not django_settings.DEBUG:
+        raise Http404
+    users = User.objects.all().select_related('departement').order_by('role', 'username')
+    MOT_DE_PASSE_TEST = 'Test@1234'
+    return render(request, 'archives/extra_usage.html', {
+        'users': users,
+        'mdp_test': MOT_DE_PASSE_TEST,
+        'admin_dev': {'username': 'admin_dev', 'password': 'Ensmg@2026!'},
+    })
+

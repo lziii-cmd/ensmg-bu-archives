@@ -1,0 +1,82 @@
+name: CI — ENSMG Archives
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Tests & vérifications
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB:       ensmg_archives_test
+          POSTGRES_USER:     postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SECRET_KEY:    test-secret-key-pour-ci-uniquement
+      DJANGO_DEBUG:         "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DB_ENGINE:            django.db.backends.postgresql
+      DB_NAME:              ensmg_archives_test
+      DB_USER:              postgres
+      DB_PASSWORD:          postgres
+      DB_HOST:              localhost
+      DB_PORT:              "5432"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances système (WeasyPrint)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 \
+            libffi-dev shared-mime-info
+
+      - name: Installer les dépendances Python
+        run: pip install -r requirements.txt
+
+      - name: Vérifications Django (check)
+        run: python manage.py check
+
+      - name: Vérifier les migrations manquantes
+        run: python manage.py migrate --check
+
+      - name: Lancer les tests
+        run: python manage.py test archives.tests --verbosity=2
+
+  lint:
+    name: Qualité du code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install flake8
+      - name: Vérification flake8 (erreurs critiques uniquement)
+        run: |
+          flake8 archives/ users/ ensmg_bu_archives_project/ \
+            --count --select=E9,F63,F7,F82 --show-source --statistics
