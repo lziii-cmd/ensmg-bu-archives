@@ -3049,3 +3049,11 @@ def extra_usage(request):
     users = User.objects.all().select_related('departement').order_by('role', 'username')
     return render(request, 'archives/extra_usage.html', {'users': users})
 
+
+# ==============================================================================
+# Page publique de documentation
+# ==============================================================================
+
+def documentation(request):
+    return render(request, 'archives/documentation.html')
+

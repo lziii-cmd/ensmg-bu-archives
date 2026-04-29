@@ -166,4 +166,7 @@ urlpatterns = [
 
     # DEV ONLY
     path('extra-usage/', views.extra_usage, name='extra_usage'),
+
+    # Page publique de documentation
+    path('documentation/', views.documentation, name='documentation'),
 ]

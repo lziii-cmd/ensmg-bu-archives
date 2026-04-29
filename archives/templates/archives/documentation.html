@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — Système de Gestion des Archives ENSMG</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --archiviste: #1a5276;
+      --agent:      #5b2f8a;
+      --accent:     #ffc107;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fb;
+      color: #212529;
+    }
+
+    /* ── Barre de navigation ── */
+    .doc-navbar {
+      background: linear-gradient(135deg, #1a2a4a 0%, #2d4270 100%);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 12px rgba(0,0,0,.35);
+    }
+    .doc-navbar .brand { color: #fff; font-size: 1.15rem; font-weight: 700; }
+    .doc-navbar .brand span { color: var(--accent); }
+    .nav-pills-doc .nav-link {
+      color: rgba(255,255,255,.75);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: .85rem;
+      transition: background .2s;
+    }
+    .nav-pills-doc .nav-link:hover,
+    .nav-pills-doc .nav-link.active { background: rgba(255,255,255,.15); color: #fff; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a2a4a 0%, #4a2a6e 100%);
+      color: #fff;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero .badge-law {
+      background: rgba(255,193,7,.25);
+      color: #ffc107;
+      border: 1px solid #ffc107;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: .78rem;
+      letter-spacing: .5px;
+    }
+    .hero h1 { font-size: 2.4rem; font-weight: 800; margin: 1rem 0 .5rem; }
+    .hero p  { font-size: 1.1rem; opacity: .85; max-width: 700px; margin: 0 auto 2rem; }
+    .hero .btn-login {
+      background: var(--accent);
+      color: #212529;
+      font-weight: 700;
+      border-radius: 25px;
+      padding: .65rem 2rem;
+      border: none;
+      text-decoration: none;
+    }
+    .hero .btn-login:hover { background: #e6aa00; color: #000; }
+
+    /* ── Sections ── */
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: .3rem;
+    }
+    .section-subtitle { color: #6c757d; margin-bottom: 2.5rem; font-size: .95rem; }
+
+    /* ── Rôle badge ── */
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 30px;
+      padding: .45rem 1.2rem;
+      font-weight: 700;
+      font-size: .9rem;
+      margin-bottom: 2rem;
+    }
+    .role-archiviste { background: #d6eaf8; color: var(--archiviste); border: 2px solid #aed6f1; }
+    .role-agent      { background: #ede0f7; color: var(--agent);      border: 2px solid #c9a9e6; }
+    .role-direction  { background: #fef9e7; color: #856404;            border: 2px solid #ffc107; }
+
+    /* ── Feature cards ── */
+    .feat-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      border: 1px solid #e9ecef;
+      height: 100%;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .feat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+    .feat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      flex-shrink: 0;
+    }
+    .icon-blue   { background: #d6eaf8; color: var(--archiviste); }
+    .icon-purple { background: #ede0f7; color: var(--agent);      }
+    .icon-gold   { background: #fef9e7; color: #856404;           }
+    .icon-red    { background: #fdecea; color: #c0392b;           }
+    .icon-green  { background: #eafaf1; color: #1e8449;           }
+    .icon-gray   { background: #f4f6fb; color: #495057;           }
+
+    .feat-title { font-weight: 700; font-size: 1rem; margin-bottom: .5rem; }
+    .feat-desc  { font-size: .87rem; color: #555; line-height: 1.5; margin: 0; }
+
+    /* ── Steps ── */
+    .step-list { list-style: none; padding: 0; margin: 0; }
+    .step-list li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 1.1rem;
+    }
+    .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .num-blue   { background: var(--archiviste); color: #fff; }
+    .num-purple { background: var(--agent);      color: #fff; }
+    .step-text  { font-size: .9rem; color: #444; padding-top: 4px; line-height: 1.5; }
+    .step-text strong { color: #212529; }
+
+    /* ── Process timeline ── */
+    .process-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 1.5rem 0;
+    }
+    .p-step {
+      background: #fff;
+      border: 1.5px solid #dee2e6;
+      border-radius: 10px;
+      padding: .6rem 1rem;
+      font-size: .8rem;
+      font-weight: 600;
+      text-align: center;
+      min-width: 110px;
+    }
+    .p-arrow {
+      color: #adb5bd;
+      font-size: 1.2rem;
+      margin: 0 4px;
+    }
+    .p-step.active-blue   { border-color: var(--archiviste); color: var(--archiviste); background: #d6eaf8; }
+    .p-step.active-purple { border-color: var(--agent);      color: var(--agent);      background: #ede0f7; }
+    .p-step.active-gold   { border-color: #856404;            color: #856404;            background: #fef9e7; }
+    .p-step.active-green  { border-color: #1e8449;            color: #1e8449;            background: #eafaf1; }
+
+    /* ── Alerts ── */
+    .doc-alert {
+      border-radius: 10px;
+      border-left: 4px solid;
+      padding: .9rem 1.2rem;
+      font-size: .87rem;
+    }
+    .doc-alert-info    { background: #e8f4fd; border-color: #2980b9; color: #1a5276; }
+    .doc-alert-warning { background: #fef9e7; border-color: #f39c12; color: #7d6608; }
+    .doc-alert-danger  { background: #fdecea; border-color: #c0392b; color: #78281f; }
+
+    /* ── Glossaire table ── */
+    .gloss-table th { background: #1a2a4a; color: #fff; font-weight: 600; font-size: .82rem; }
+    .gloss-table td { font-size: .85rem; }
+    .gloss-table tr:nth-child(even) td { background: #f8f9fa; }
+
+    /* ── Sidebar TOC ── */
+    .toc-sidebar {
+      position: sticky;
+      top: 80px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.2rem;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .toc-sidebar .toc-title { font-weight: 700; font-size: .85rem; color: #495057; margin-bottom: .8rem; text-transform: uppercase; letter-spacing: .5px; }
+    .toc-sidebar a {
+      display: block;
+      color: #555;
+      font-size: .83rem;
+      text-decoration: none;
+      padding: 3px 0;
+      border-left: 3px solid transparent;
+      padding-left: 8px;
+      transition: all .15s;
+    }
+    .toc-sidebar a:hover { color: var(--archiviste); border-color: var(--archiviste); }
+    .toc-sidebar .toc-section { color: #888; font-size: .75rem; margin-top: .8rem; margin-bottom: .2rem; font-weight: 600; text-transform: uppercase; }
+
+    /* ── Footer ── */
+    .doc-footer {
+      background: #1a2a4a;
+      color: rgba(255,255,255,.6);
+      text-align: center;
+      padding: 2rem;
+      font-size: .82rem;
+      margin-top: 4rem;
+    }
+    .doc-footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ─── Navbar ──────────────────────────────────────────────────── -->
+<nav class="doc-navbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div class="brand">
+    <i class="bi bi-archive me-1"></i>ENSMG <span>Archives</span>
+    <span class="text-white-50 fw-normal ms-2" style="font-size:.78rem">Documentation</span>
+  </div>
+  <ul class="nav nav-pills-doc mb-0 d-flex gap-1 flex-wrap">
+    <li class="nav-item"><a class="nav-link" href="#apercu">Aperçu</a></li>
+    <li class="nav-item"><a class="nav-link" href="#archiviste">Archiviste</a></li>
+    <li class="nav-item"><a class="nav-link" href="#employe">Employé</a></li>
+    <li class="nav-item"><a class="nav-link" href="#direction">Direction</a></li>
+    <li class="nav-item"><a class="nav-link" href="#processus">Processus</a></li>
+    <li class="nav-item"><a class="nav-link" href="#glossaire">Glossaire</a></li>
+    <li class="nav-item">
+      <a class="nav-link" href="/auth/login/" style="background:rgba(255,193,7,.2);color:#ffc107">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Connexion
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ─── Hero ────────────────────────────────────────────────────── -->
+<section class="hero" id="apercu">
+  <div class="badge-law mb-3">
+    <i class="bi bi-shield-check me-1"></i>Conforme — Loi sénégalaise n° 2006-19 · ISO 15489
+  </div>
+  <h1>Système de Gestion des Archives<br><span style="color:#ffc107">ENSMG</span></h1>
+  <p>
+    Plateforme de gestion documentaire de l'École Nationale des Sciences et Mesures Géologiques.
+    Dépôt, archivage, prêt, élimination et traçabilité complète de vos documents administratifs.
+  </p>
+  <a href="/auth/login/" class="btn-login">
+    <i class="bi bi-box-arrow-in-right me-2"></i>Accéder à l'application
+  </a>
+</section>
+
+<!-- ─── KPI rapides ──────────────────────────────────────────────── -->
+<div class="container py-4">
+  <div class="row g-3 text-center">
+    <div class="col-6 col-md-3">
+      <div class="feat-card">
+        <div class="feat-icon icon-blue mx-auto"><i class="bi bi-people"></i></div>
+        <div class="fw-bold fs-5">5 rôles</div>
+        <div class="text-muted small">Admin · Archiviste · Direction · Personnel · Enseignant</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="feat-card">
+        <div class="feat-icon icon-purple mx-auto"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="fw-bold fs-5">Cycle complet</div>
+        <div class="text-muted small">Dépôt → Archivage → Prêt → Élimination</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="feat-card">
+        <div class="feat-icon icon-green mx-auto"><i class="bi bi-shield-lock"></i></div>
+        <div class="fw-bold fs-5">Sécurisé</div>
+        <div class="text-muted small">SHA-256 · Traçabilité · Confidentialité RBAC</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="feat-card">
+        <div class="feat-icon icon-gold mx-auto"><i class="bi bi-journal-check"></i></div>
+        <div class="fw-bold fs-5">Conforme</div>
+        <div class="text-muted small">DUA · Visa DAS · Bordereaux officiels PDF</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Corps principal ──────────────────────────────────────────── -->
+<div class="container py-4">
+  <div class="row g-4">
+
+    <!-- Sidebar TOC (masquée sur mobile) -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="toc-sidebar">
+        <div class="toc-title"><i class="bi bi-list-ul me-1"></i>Sommaire</div>
+        <div class="toc-section">Rôles</div>
+        <a href="#archiviste"><i class="bi bi-person-badge me-1"></i>Archiviste</a>
+        <a href="#employe"><i class="bi bi-person me-1"></i>Employé / Personnel</a>
+        <a href="#direction"><i class="bi bi-graph-up me-1"></i>Direction</a>
+        <div class="toc-section">Fonctionnalités</div>
+        <a href="#depot">Dépôt de documents</a>
+        <a href="#prets">Prêts de documents</a>
+        <a href="#courrier">Module courrier</a>
+        <a href="#bordereaux">Bordereaux officiels</a>
+        <a href="#audit">Audit & traçabilité</a>
+        <div class="toc-section">Référence</div>
+        <a href="#processus">Processus complets</a>
+        <a href="#glossaire">Glossaire</a>
+        <a href="#comptes">Comptes & connexion</a>
+      </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="col-lg-9">
+
+      <!-- ══ SECTION ARCHIVISTE ═══════════════════════════════════ -->
+      <section id="archiviste" class="mb-5">
+        <div class="role-badge role-archiviste">
+          <i class="bi bi-person-badge-fill"></i> Rôle — Archiviste
+        </div>
+        <h2 class="section-title">Fonctionnalités de l'Archiviste</h2>
+        <p class="section-subtitle">
+          L'archiviste est le gestionnaire central du système. Il traite les demandes, gère le fonds documentaire et produit les bordereaux officiels.
+        </p>
+
+        <div class="row g-3 mb-4" id="depot">
+          <!-- Gestion des dépôts -->
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-inbox-fill"></i></div>
+              <div class="feat-title">Traitement des dépôts</div>
+              <p class="feat-desc">
+                Consulte tous les documents soumis par les employés. Pour chaque dépôt, l'archiviste peut <strong>accepter</strong> (le document entre dans le fonds) ou <strong>rejeter</strong> (avec un motif). Une notification est envoyée à l'employé.
+              </p>
+            </div>
+          </div>
+          <!-- Gestion des prêts -->
+          <div class="col-md-6" id="prets">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-arrow-left-right"></i></div>
+              <div class="feat-title">Gestion des prêts</div>
+              <p class="feat-desc">
+                Traite les demandes de prêt (physique ou numérique). Définit la <strong>durée de prêt</strong> et enregistre le retour. Suit les prêts en retard depuis le tableau de bord.
+              </p>
+            </div>
+          </div>
+          <!-- Recherche documentaire -->
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-search"></i></div>
+              <div class="feat-title">Recherche documentaire</div>
+              <p class="feat-desc">
+                Traite les demandes de recherche d'un agent. Peut accorder un accès temporaire au document trouvé ou refuser avec explication.
+              </p>
+            </div>
+          </div>
+          <!-- Versements -->
+          <div class="col-md-6" id="bordereaux">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-file-earmark-arrow-up"></i></div>
+              <div class="feat-title">Bordereaux de versement</div>
+              <p class="feat-desc">
+                Génère des <strong>bordereaux de versement</strong> (BV) regroupant des dépôts validés. Exporte en <strong>PDF officiel A4</strong> avec signatures. Conforme à la loi 2006-19.
+              </p>
+            </div>
+          </div>
+          <!-- Éliminations -->
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-red"><i class="bi bi-trash3"></i></div>
+              <div class="feat-title">Bordereaux d'élimination</div>
+              <p class="feat-desc">
+                Crée des <strong>bordereaux d'élimination</strong> (BE) pour les documents dont la DUA est échue. L'élimination est bloquée jusqu'à l'obtention du <strong>visa DAS</strong> obligatoire. Export PDF avec les 3 zones de signature.
+              </p>
+            </div>
+          </div>
+          <!-- Catégories & plan -->
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-diagram-3"></i></div>
+              <div class="feat-title">Catégories & Plan de classement</div>
+              <p class="feat-desc">
+                Administre les <strong>catégories documentaires</strong> (avec code, DUA et sort final) et le <strong>plan de classement</strong> hiérarchique de l'établissement.
+              </p>
+            </div>
+          </div>
+          <!-- Courrier -->
+          <div class="col-md-6" id="courrier">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-envelope-paper"></i></div>
+              <div class="feat-title">Module courrier</div>
+              <p class="feat-desc">
+                Enregistre les courriers <strong>entrants et sortants</strong>, leur affecte un service destinataire, suit leur traitement. Génère des bordereaux de versement et d'élimination spécifiques aux courriers.
+              </p>
+            </div>
+          </div>
+          <!-- Audit -->
+          <div class="col-md-6" id="audit">
+            <div class="feat-card">
+              <div class="feat-icon icon-gray"><i class="bi bi-journal-text"></i></div>
+              <div class="feat-title">Journal d'audit</div>
+              <p class="feat-desc">
+                Accès au <strong>journal complet</strong> des mouvements documentaires (immuable). Création de <strong>tokens d'audit temporaires</strong> pour accorder un accès de consultation à un commissaire ou inspecteur sans lui créer de compte.
+              </p>
+            </div>
+          </div>
+          <!-- Corbeille -->
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-gray"><i class="bi bi-recycle"></i></div>
+              <div class="feat-title">Corbeille & Restauration</div>
+              <p class="feat-desc">
+                Les documents supprimés partent en <strong>corbeille pendant 30 jours</strong>. L'archiviste peut les restaurer. Après 30 jours, la suppression est définitive.
+              </p>
+            </div>
+          </div>
+          <!-- Messagerie -->
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-chat-dots"></i></div>
+              <div class="feat-title">Messagerie interne</div>
+              <p class="feat-desc">
+                Échange de messages internes avec tous les utilisateurs du système. Boîtes <strong>Réception / Envoyés / Corbeille</strong>. Fonction de réponse directe.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comment utiliser — Archiviste -->
+        <div class="doc-alert doc-alert-info mb-4">
+          <strong><i class="bi bi-info-circle me-1"></i>Connexion Archiviste</strong> — Accède au tableau de bord via <code>/dashboard/</code>. Le menu latéral bleu donne accès à toutes les fonctionnalités de gestion.
+        </div>
+
+        <h5 class="fw-bold mb-3">Guide pas-à-pas — Traiter un dépôt</h5>
+        <ul class="step-list">
+          <li>
+            <div class="step-num num-blue">1</div>
+            <div class="step-text">Aller dans <strong>Dépôts → File d'attente</strong> (<code>/archiviste/depots/</code>).</div>
+          </li>
+          <li>
+            <div class="step-num num-blue">2</div>
+            <div class="step-text">Cliquer sur un dépôt pour l'examiner : titre, catégorie, fichier joint, métadonnées.</div>
+          </li>
+          <li>
+            <div class="step-num num-blue">3</div>
+            <div class="step-text">Choisir <strong>Archiver</strong> (le document rejoint le fonds) ou <strong>Rejeter</strong> (saisir un motif obligatoire).</div>
+          </li>
+          <li>
+            <div class="step-num num-blue">4</div>
+            <div class="step-text">Le système calcule automatiquement le <strong>SHA-256</strong> d'intégrité, l'<strong>identifiant pérenne</strong> et la <strong>date de fin DUA</strong>.</div>
+          </li>
+          <li>
+            <div class="step-num num-blue">5</div>
+            <div class="step-text">L'agent reçoit une <strong>notification</strong> dans son espace personnel.</div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- ══ SECTION EMPLOYÉ ═══════════════════════════════════════ -->
+      <section id="employe" class="mb-5">
+        <div class="role-badge role-agent">
+          <i class="bi bi-person-fill"></i> Rôle — Personnel / Enseignant
+        </div>
+        <h2 class="section-title">Fonctionnalités de l'Employé</h2>
+        <p class="section-subtitle">
+          Chaque employé (personnel administratif ou enseignant) dispose d'un espace personnel pour déposer ses documents, suivre leurs statuts et accéder au fonds documentaire.
+        </p>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-upload"></i></div>
+              <div class="feat-title">Déposer un document</div>
+              <p class="feat-desc">
+                Soumet un document au bureau des archives via le formulaire de dépôt. Renseigne le titre, la catégorie, la date et joint le fichier (PDF, DOCX, images…). Le dépôt est traité par l'archiviste.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-clock-history"></i></div>
+              <div class="feat-title">Suivre mes dépôts</div>
+              <p class="feat-desc">
+                Consulte l'historique de tous ses dépôts avec leur statut (<strong>En attente</strong>, <strong>Archivé</strong>, <strong>Rejeté</strong>). En cas de rejet, peut reformuler et soumettre à nouveau.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-book"></i></div>
+              <div class="feat-title">Demander un prêt</div>
+              <p class="feat-desc">
+                Sur la fiche d'un document accessible, peut demander un <strong>prêt physique</strong> (consultation en salle) ou un <strong>accès numérique</strong> (téléchargement temporaire). La demande est transmise à l'archiviste.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-search-heart"></i></div>
+              <div class="feat-title">Demander une recherche</div>
+              <p class="feat-desc">
+                Si un document n'est pas trouvable dans le catalogue, peut déposer une <strong>demande de recherche documentaire</strong>. L'archiviste effectue la recherche et communique le résultat.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-bell"></i></div>
+              <div class="feat-title">Notifications</div>
+              <p class="feat-desc">
+                Reçoit des notifications pour chaque événement : dépôt traité, prêt accordé ou refusé, retour attendu, demande de recherche résolue.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-chat-dots"></i></div>
+              <div class="feat-title">Messagerie interne</div>
+              <p class="feat-desc">
+                Envoie et reçoit des messages internes avec les autres membres du personnel et l'archiviste. Pratique pour poser des questions sur un dossier ou signaler une anomalie.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-alert doc-alert-warning mb-4">
+          <strong><i class="bi bi-exclamation-triangle me-1"></i>Accès aux documents</strong> — L'employé ne voit que les documents <strong>publics</strong> ou ceux pour lesquels un accès lui a été accordé explicitement. Les documents confidentiels et secrets sont réservés aux rôles autorisés.
+        </div>
+
+        <h5 class="fw-bold mb-3">Guide pas-à-pas — Déposer un document</h5>
+        <ul class="step-list">
+          <li>
+            <div class="step-num num-purple">1</div>
+            <div class="step-text">Cliquer sur <strong>Nouveau dépôt</strong> dans le menu (<code>/depots/nouveau/</code>).</div>
+          </li>
+          <li>
+            <div class="step-num num-purple">2</div>
+            <div class="step-text">Remplir le formulaire : <strong>titre</strong>, <strong>catégorie</strong>, <strong>date du document</strong> et joindre le fichier.</div>
+          </li>
+          <li>
+            <div class="step-num num-purple">3</div>
+            <div class="step-text">Soumettre. Le dépôt apparaît dans <strong>Mes dépôts</strong> avec le statut <em>En attente</em>.</div>
+          </li>
+          <li>
+            <div class="step-num num-purple">4</div>
+            <div class="step-text">Attendre la décision de l'archiviste. Une <strong>notification</strong> apparaît dès qu'une décision est prise.</div>
+          </li>
+          <li>
+            <div class="step-num num-purple">5</div>
+            <div class="step-text">Si le dépôt est <strong>rejeté</strong>, cliquer sur <em>Reformuler</em> pour corriger et soumettre à nouveau.</div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- ══ SECTION DIRECTION ═════════════════════════════════════ -->
+      <section id="direction" class="mb-5">
+        <div class="role-badge role-direction">
+          <i class="bi bi-graph-up-arrow"></i> Rôle — Direction
+        </div>
+        <h2 class="section-title">Rapport de Direction</h2>
+        <p class="section-subtitle">
+          La direction dispose d'une vue synthétique en lecture seule du fonds documentaire et des alertes opérationnelles.
+        </p>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-gold"><i class="bi bi-bar-chart-line"></i></div>
+              <div class="feat-title">KPI documentaires</div>
+              <p class="feat-desc">
+                Vue agrégée : nombre total de documents, archives courantes, DUA échues et DUA arrivant à échéance dans 30 jours.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-red"><i class="bi bi-shield-exclamation"></i></div>
+              <div class="feat-title">Documents sensibles</div>
+              <p class="feat-desc">
+                Liste des documents classifiés <strong>Confidentiel</strong> ou <strong>Secret</strong> présents dans le fonds, avec leur catégorie.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-gold"><i class="bi bi-clock-history"></i></div>
+              <div class="feat-title">Éliminations & versements</div>
+              <p class="feat-desc">
+                Suivi des bordereaux d'élimination en attente de visa DAS et des versements en attente de validation.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-red"><i class="bi bi-hourglass-split"></i></div>
+              <div class="feat-title">Prêts en retard</div>
+              <p class="feat-desc">
+                Liste des prêts dont la date de retour prévue est dépassée, avec l'identité de l'emprunteur.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-alert doc-alert-info">
+          <strong><i class="bi bi-lock me-1"></i>Accès restreint</strong> — Le rapport de direction (<code>/gestion/direction/rapport/</code>) est accessible uniquement aux utilisateurs avec le rôle <strong>Direction</strong> ou <strong>Admin</strong>.
+        </div>
+      </section>
+
+      <!-- ══ SECTION PROCESSUS ═════════════════════════════════════ -->
+      <section id="processus" class="mb-5">
+        <h2 class="section-title">Processus complets</h2>
+        <p class="section-subtitle">Cycle de vie d'un document de la soumission à l'élimination ou à la conservation définitive.</p>
+
+        <h5 class="fw-bold mb-2 mt-4">1. Cycle de vie d'un document</h5>
+        <div class="process-row">
+          <div class="p-step active-purple">Dépôt<br><small>Employé</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-blue">Traitement<br><small>Archiviste</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-green">Archivé<br><small>Fonds</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-gold">DUA échue<br><small>Décision</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-blue">Élimination<br><small>Visa DAS</small></div>
+        </div>
+
+        <h5 class="fw-bold mb-2 mt-4">2. Processus d'élimination</h5>
+        <div class="process-row">
+          <div class="p-step">DUA calculée</div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-red" style="border-color:#c0392b;color:#c0392b;background:#fdecea">DUA échue</div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-blue">Bordereau<br>d'élimination</div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-gold">Visa DAS<br>requis</div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-green">Élimination<br>exécutée</div>
+        </div>
+
+        <h5 class="fw-bold mb-2 mt-4">3. Processus de prêt</h5>
+        <div class="process-row">
+          <div class="p-step active-purple">Demande<br><small>Employé</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-blue">Accord / Refus<br><small>Archiviste</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step active-green">Prêt actif<br><small>Délai fixé</small></div>
+          <div class="p-arrow"><i class="bi bi-arrow-right"></i></div>
+          <div class="p-step">Retour<br><small>Archiviste</small></div>
+        </div>
+
+        <div class="doc-alert doc-alert-danger mt-4">
+          <strong><i class="bi bi-exclamation-triangle me-1"></i>Élimination irréversible</strong> — Une fois un bordereau d'élimination exécuté et le visa DAS obtenu, la destruction des documents est définitive et traçée dans le journal d'audit.
+        </div>
+      </section>
+
+      <!-- ══ SECTION GLOSSAIRE ═════════════════════════════════════ -->
+      <section id="glossaire" class="mb-5">
+        <h2 class="section-title">Glossaire</h2>
+        <p class="section-subtitle">Termes archivistiques et spécifiques au système.</p>
+
+        <table class="table gloss-table rounded overflow-hidden">
+          <thead>
+            <tr>
+              <th style="width:22%">Terme</th>
+              <th>Définition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>DUA</strong></td>
+              <td>Durée d'Utilité Administrative. Période pendant laquelle un document doit être conservé avant qu'une décision de sort final puisse être prise (conservation définitive, tri ou élimination).</td>
+            </tr>
+            <tr>
+              <td><strong>Visa DAS</strong></td>
+              <td>Autorisation obligatoire de la Direction des Archives du Sénégal avant toute élimination de documents. Exigé par la loi 2006-19.</td>
+            </tr>
+            <tr>
+              <td><strong>Bordereau de versement (BV)</strong></td>
+              <td>Document officiel listant les documents transférés du service producteur vers les archives. Signé par l'archiviste et le directeur.</td>
+            </tr>
+            <tr>
+              <td><strong>Bordereau d'élimination (BE)</strong></td>
+              <td>Document officiel listant les documents dont la DUA est échue et dont le sort final est l'élimination. Requiert le visa DAS.</td>
+            </tr>
+            <tr>
+              <td><strong>Sort final</strong></td>
+              <td>Décision prise à l'échéance de la DUA : <em>Conservation</em> (archives définitives), <em>Élimination</em> (destruction) ou <em>Tri</em> (sélection partielle).</td>
+            </tr>
+            <tr>
+              <td><strong>SHA-256</strong></td>
+              <td>Empreinte cryptographique calculée sur chaque fichier archivé. Permet de détecter toute altération ultérieure du document.</td>
+            </tr>
+            <tr>
+              <td><strong>Identifiant pérenne</strong></td>
+              <td>Identifiant unique au format <code>ENSMG-AAAA-CODE-XXXXXXXX</code> attribué à chaque document archivé. Inchangeable et tracé dans le journal.</td>
+            </tr>
+            <tr>
+              <td><strong>Legal hold</strong></td>
+              <td>Gel de destruction d'un document pour raisons légales ou contentieuses. Bloque l'élimination même si la DUA est échue.</td>
+            </tr>
+            <tr>
+              <td><strong>Token d'audit</strong></td>
+              <td>Accès temporaire et limité créé pour un contrôleur ou inspecteur externe, sans lui créer de compte permanent dans le système.</td>
+            </tr>
+            <tr>
+              <td><strong>Plan de classement</strong></td>
+              <td>Structure hiérarchique de référence qui organise les catégories de documents selon l'organigramme de l'établissement.</td>
+            </tr>
+            <tr>
+              <td><strong>RBAC</strong></td>
+              <td>Role-Based Access Control. Chaque utilisateur a un rôle qui détermine précisément ce qu'il peut voir et faire dans le système.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ══ SECTION COMPTES ═══════════════════════════════════════ -->
+      <section id="comptes" class="mb-5">
+        <h2 class="section-title">Connexion & Comptes</h2>
+        <p class="section-subtitle">Accès à l'application et gestion des rôles.</p>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-blue"><i class="bi bi-door-open"></i></div>
+              <div class="feat-title">Connexion</div>
+              <p class="feat-desc">
+                Accéder à <code>/auth/login/</code> avec votre identifiant et mot de passe fournis par l'administrateur. En cas d'oubli, contacter l'archiviste ou l'administrateur système.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-purple"><i class="bi bi-person-gear"></i></div>
+              <div class="feat-title">Mon profil</div>
+              <p class="feat-desc">
+                Chaque utilisateur peut consulter et modifier ses informations personnelles depuis <code>/profil/</code> : nom, email, département d'appartenance.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-gray"><i class="bi bi-people-fill"></i></div>
+              <div class="feat-title">Rôles disponibles</div>
+              <p class="feat-desc">
+                <span class="badge bg-dark me-1">ADMIN</span> Gestion complète du système<br>
+                <span class="badge me-1" style="background:#1a5276">ARCHIVISTE</span> Gestion documentaire<br>
+                <span class="badge me-1" style="background:#856404;color:#fff">DIRECTION</span> Rapport de direction<br>
+                <span class="badge me-1" style="background:#5b2f8a">PERSONNEL</span> Dépôts & prêts<br>
+                <span class="badge bg-secondary me-1">ENSEIGNANT</span> Dépôts & prêts
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feat-card">
+              <div class="feat-icon icon-gold"><i class="bi bi-shield-check"></i></div>
+              <div class="feat-title">Sécurité</div>
+              <p class="feat-desc">
+                Sessions sécurisées avec expiration automatique. Toutes les actions sont enregistrées dans le journal d'audit horodaté. Les mots de passe sont hachés (Django PBKDF2-SHA256).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-4">
+          <a href="/auth/login/" class="btn btn-lg px-5 py-3 fw-bold" style="background:#1a2a4a;color:#fff;border-radius:30px;text-decoration:none">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Accéder à l'application
+          </a>
+        </div>
+      </section>
+
+    </div><!-- /col-lg-9 -->
+  </div><!-- /row -->
+</div><!-- /container -->
+
+<!-- ─── Footer ───────────────────────────────────────────────────── -->
+<footer class="doc-footer">
+  <div>
+    <strong style="color:#fff">ENSMG</strong> — École Nationale des Sciences et Mesures Géologiques<br>
+    Bureau des Archives — Système de Gestion Documentaire<br>
+    Conforme à la loi sénégalaise n° 2006-19 sur les archives et à la norme ISO 15489<br>
+    <br>
+    <a href="/auth/login/">Connexion</a> &nbsp;·&nbsp;
+    <a href="/dashboard/">Tableau de bord</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Surlignage actif du sommaire au scroll
+  const sections = document.querySelectorAll('section[id]');
+  const tocLinks = document.querySelectorAll('.toc-sidebar a[href^="#"]');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    tocLinks.forEach(a => {
+      a.style.borderColor = a.getAttribute('href') === '#' + current ? 'var(--archiviste)' : 'transparent';
+      a.style.color       = a.getAttribute('href') === '#' + current ? 'var(--archiviste)' : '';
+    });
+  });
+</script>
+</body>
+</html>
