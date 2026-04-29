@@ -107,15 +107,20 @@ urlpatterns = [
     # Provenance externe (AJAX + création depuis popup dépôt)
     path('gestion/provenance/ajax-create/', views.admin_provenance_create_ajax, name='admin_provenance_ajax'),
 
+    # ── Reporting Direction ───────────────────────────────────────────────────
+    path('gestion/direction/rapport/', views.direction_rapport, name='direction_rapport'),
+
     # ── Bordereaux de versement ───────────────────────────────────────────────
     path('gestion/versements/', views.admin_bordereaux_versement, name='admin_bordereaux_versement'),
     path('gestion/versements/generer/', views.admin_bordereau_versement_generer, name='admin_bordereau_versement_generer'),
     path('gestion/versements/<int:pk>/', views.admin_bordereau_versement_detail, name='admin_bordereau_versement_detail'),
+    path('gestion/versements/<int:pk>/pdf/', views.bordereau_versement_pdf, name='bordereau_versement_pdf'),
 
     # ── Bordereaux d'élimination ──────────────────────────────────────────────
     path('gestion/eliminations/', views.admin_bordereaux_elimination, name='admin_bordereaux_elimination'),
     path('gestion/eliminations/creer/', views.admin_bordereau_elimination_create, name='admin_bordereau_elimination_create'),
     path('gestion/eliminations/<int:pk>/', views.admin_bordereau_elimination_detail, name='admin_bordereau_elimination_detail'),
+    path('gestion/eliminations/<int:pk>/pdf/', views.bordereau_elimination_pdf, name='bordereau_elimination_pdf'),
 
     # ── Corbeille (soft delete) ───────────────────────────────────────────────
     path('gestion/corbeille/', views.corbeille_list, name='corbeille'),

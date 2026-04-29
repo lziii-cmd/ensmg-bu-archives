@@ -3,6 +3,7 @@ archives/views.py — Vues ENSMG — champs calés sur les vrais modèles.
 Deux espaces distincts : ARCHIVISTE (bleu) / AGENT (mauve).
 """
 import hashlib
+import datetime as _dt
 from datetime import timedelta
 
 from django.contrib import messages
@@ -2930,6 +2931,113 @@ def courrier_be_detail(request, pk):
                        ('Éliminations', 'archives:courrier_be_liste'),
                        (be.numero, None)],
     })
+
+
+# ==============================================================================
+# RAPPORT DIRECTION
+# ==============================================================================
+
+@login_required
+def direction_rapport(request):
+    """Tableau de bord réservé à la Direction et aux administrateurs."""
+    if not (est_direction(request.user) or est_admin(request.user)):
+        raise PermissionDenied
+
+    today = _dt.date.today()
+    alerte_30j = today + timedelta(days=30)
+
+    docs_qs = Document.objects.filter(deleted_at__isnull=True)
+
+    ctx = {
+        **_notif_ctx(request),
+        # KPI généraux
+        'nb_docs_total':      docs_qs.count(),
+        'nb_docs_courants':   docs_qs.filter(statut='COURANT').count(),
+        'nb_dua_echues':      docs_qs.filter(date_fin_dua__lt=today).count(),
+        'nb_dua_alerte':      docs_qs.filter(date_fin_dua__gte=today, date_fin_dua__lte=alerte_30j).count(),
+        # Docs sensibles
+        'docs_confidentiels': docs_qs.filter(
+            confidentialite__in=('CONFIDENTIEL', 'SECRET')
+        ).select_related('categorie', 'plan_classement').order_by('-date_creation')[:20],
+        # DUA
+        'docs_dua_echues':    docs_qs.filter(
+            date_fin_dua__lt=today
+        ).select_related('categorie').order_by('date_fin_dua')[:15],
+        'docs_dua_alerte':    docs_qs.filter(
+            date_fin_dua__gte=today, date_fin_dua__lte=alerte_30j
+        ).select_related('categorie').order_by('date_fin_dua')[:15],
+        # Bordereaux
+        'eliminations_en_cours': BordereauElimination.objects.filter(
+            statut__in=('BROUILLON', 'EN_VALIDATION')
+        ).order_by('-date_creation')[:10],
+        'versements_en_attente': BordereauVersement.objects.filter(
+            statut__in=('BROUILLON', 'EN_VALIDATION')
+        ).order_by('-date_creation')[:10],
+        # Prêts en retard
+        'prets_en_retard': PretDocument.objects.filter(
+            statut='EN_COURS', date_retour_prevue__lt=today
+        ).select_related('emprunteur', 'document').order_by('date_retour_prevue')[:10],
+        'breadcrumb': [('Tableau de bord', 'archives:dashboard'), ('Rapport Direction', None)],
+    }
+    return render(request, 'archives/direction/rapport.html', ctx)
+
+
+# ==============================================================================
+# PDF — BORDEREAUX DE VERSEMENT ET D'ÉLIMINATION
+# ==============================================================================
+
+@login_required
+def bordereau_versement_pdf(request, pk):
+    """Génère un PDF institutionnel pour un bordereau de versement."""
+    if not (est_archiviste(request.user) or est_admin(request.user) or est_direction(request.user)):
+        raise PermissionDenied
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        from django.http import HttpResponse
+        return HttpResponse("WeasyPrint non disponible.", status=503)
+
+    bv     = get_object_or_404(BordereauVersement, pk=pk)
+    depots = bv.depots.select_related('agent', 'categorie').all()
+
+    html_str = render(request, 'archives/admin/bordereaux/versement_pdf.html', {
+        'bv': bv, 'depots': depots,
+    }).content.decode('utf-8')
+
+    pdf = HTML(string=html_str, base_url=request.build_absolute_uri('/')).write_pdf()
+    response = FileResponse(
+        pdf,
+        content_type='application/pdf',
+    )
+    response['Content-Disposition'] = f'inline; filename="BV-{bv.numero}.pdf"'
+    return response
+
+
+@login_required
+def bordereau_elimination_pdf(request, pk):
+    """Génère un PDF institutionnel pour un bordereau d'élimination."""
+    if not (est_archiviste(request.user) or est_admin(request.user) or est_direction(request.user)):
+        raise PermissionDenied
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        from django.http import HttpResponse
+        return HttpResponse("WeasyPrint non disponible.", status=503)
+
+    be   = get_object_or_404(BordereauElimination, pk=pk)
+    docs = be.documents.select_related('categorie').all()
+
+    html_str = render(request, 'archives/admin/bordereaux/elimination_pdf.html', {
+        'be': be, 'docs': docs,
+    }).content.decode('utf-8')
+
+    pdf = HTML(string=html_str, base_url=request.build_absolute_uri('/')).write_pdf()
+    response = FileResponse(
+        pdf,
+        content_type='application/pdf',
+    )
+    response['Content-Disposition'] = f'inline; filename="BE-{be.numero}.pdf"'
+    return response
 
 
 # ==============================================================================

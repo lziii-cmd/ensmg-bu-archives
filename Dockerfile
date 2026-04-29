@@ -9,7 +9,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev \
     shared-mime-info \
     libpq-dev \
@@ -21,7 +21,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput
+# Clé factice uniquement pour collectstatic au build — remplacée par .env au runtime
+RUN DJANGO_SECRET_KEY=build-only-dummy-key \
+    DJANGO_ALLOWED_HOSTS=localhost \
+    python manage.py collectstatic --noinput
 
 EXPOSE 8000
 

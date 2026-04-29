@@ -30,10 +30,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             gunicorn ensmg_bu_archives_project.wsgi:application
-             --bind 0.0.0.0:8000 --workers 3"
+    command:
+      - sh
+      - -c
+      - "python manage.py migrate --noinput && gunicorn ensmg_bu_archives_project.wsgi:application --bind 0.0.0.0:8000 --workers 3"
 
 volumes:
   postgres_data:

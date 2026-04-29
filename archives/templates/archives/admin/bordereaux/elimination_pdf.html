@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 2cm; }
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #222; }
+  h1 { font-size: 16px; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 12px; color: #555; margin-bottom: 20px; }
+  .header-block { display: flex; justify-content: space-between; margin-bottom: 20px; }
+  .info-block { border: 1px solid #ccc; padding: 10px; width: 48%; }
+  .info-block dt { font-weight: bold; font-size: 10px; color: #555; }
+  .info-block dd { margin: 0 0 6px 0; }
+  .visa-block { background: #fff3cd; border: 1px solid #ffc107; padding: 10px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th { background: #6c1a1a; color: white; padding: 6px 8px; text-align: left; font-size: 10px; }
+  td { padding: 5px 8px; border-bottom: 1px solid #eee; font-size: 10px; }
+  tr:nth-child(even) td { background: #fdf5f5; }
+  .footer { margin-top: 40px; display: flex; justify-content: space-between; }
+  .signature-box { border-top: 1px solid #333; padding-top: 8px; width: 30%; text-align: center; font-size: 10px; }
+  .logo { font-size: 20px; font-weight: bold; color: #4a2a6e; }
+  .warning { color: #6c1a1a; font-weight: bold; font-size: 11px; text-align: center;
+             border: 2px solid #6c1a1a; padding: 6px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div style="text-align:center;margin-bottom:8px">
+  <div class="logo">ENSMG</div>
+  <div style="font-size:10px;color:#555">École Nationale des Sciences et Mesures Géologiques</div>
+  <div style="font-size:10px;color:#555">Bureau des Archives — Système de Gestion Documentaire</div>
+</div>
+
+<h1>BORDEREAU D'ÉLIMINATION</h1>
+<div class="subtitle">Conforme à la loi sénégalaise n° 2006-19 — Visa DAS obligatoire</div>
+
+<p class="warning">&#9888; DOCUMENT OFFICIEL — L'ÉLIMINATION EST IRRÉVERSIBLE</p>
+
+<div class="header-block">
+  <div class="info-block">
+    <dl>
+      <dt>Numéro</dt><dd>{{ be.numero }}</dd>
+      <dt>Date de création</dt><dd>{{ be.date_creation|date:"d/m/Y" }}</dd>
+      <dt>Statut</dt><dd>{{ be.get_statut_display }}</dd>
+      <dt>Service producteur</dt><dd>{{ be.service_producteur }}</dd>
+    </dl>
+  </div>
+  <div class="info-block">
+    <dl>
+      <dt>Créé par</dt><dd>{{ be.cree_par.get_full_name|default:be.cree_par.username }}</dd>
+      <dt>Visa DAS</dt>
+      <dd>{% if be.visa_das %}&#10003; Obtenu le {{ be.date_visa|date:"d/m/Y" }}{% else %}En attente{% endif %}</dd>
+      {% if be.reference_visa %}<dt>Réf. visa</dt><dd>{{ be.reference_visa }}</dd>{% endif %}
+      {% if be.date_elimination %}<dt>Date destruction</dt><dd>{{ be.date_elimination|date:"d/m/Y" }}</dd>{% endif %}
+    </dl>
+  </div>
+</div>
+
+<div class="visa-block">
+  <strong>Motif d'élimination :</strong> {{ be.motif }}
+  {% if be.observations %}<br><strong>Observations :</strong> {{ be.observations }}{% endif %}
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Identifiant</th>
+      <th>Titre</th>
+      <th>Catégorie</th>
+      <th>Date création</th>
+      <th>DUA échue</th>
+      <th>Sort final</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for doc in docs %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td style="font-family:monospace;font-size:9px">{{ doc.identifiant }}</td>
+      <td>{{ doc.titre|truncatechars:40 }}</td>
+      <td>{{ doc.categorie.code|default:"—" }}</td>
+      <td>{{ doc.date_creation|date:"d/m/Y" }}</td>
+      <td>{{ doc.date_fin_dua|date:"d/m/Y"|default:"—" }}</td>
+      <td>{{ doc.get_sort_final_display }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" style="text-align:center;color:#888">Aucun document</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p style="margin-top:12px;font-size:10px;color:#555">
+  Total : <strong>{{ docs|length }} document(s)</strong> soumis à élimination
+</p>
+
+<div class="footer">
+  <div class="signature-box">
+    <p>L'Archiviste</p><br><br>
+    <p>Signature &amp; cachet</p>
+  </div>
+  <div class="signature-box">
+    <p>Visa DAS</p><br><br>
+    <p>Signature &amp; cachet</p>
+  </div>
+  <div class="signature-box">
+    <p>Le Directeur</p><br><br>
+    <p>Signature &amp; cachet</p>
+  </div>
+</div>
+
+<p style="margin-top:30px;font-size:9px;color:#aaa;text-align:center">
+  Document généré le {% now "d/m/Y H:i" %} — Système de Gestion des Archives ENSMG
+</p>
+
+</body>
+</html>

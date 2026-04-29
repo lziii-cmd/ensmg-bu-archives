@@ -1,0 +1,258 @@
+{% extends "archives/base.html" %}
+{% load humanize %}
+
+{% block title %}Rapport Direction — Archives ENSMG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+
+  <!-- En-tête -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-dark fw-bold">
+        <i class="bi bi-graph-up-arrow text-primary me-2"></i>Rapport de Direction
+      </h1>
+      <p class="text-muted mb-0">Tableau de bord synthétique — Archives ENSMG</p>
+    </div>
+    <span class="badge bg-primary fs-6">{{ request.user.get_full_name }}</span>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="display-6 fw-bold text-primary">{{ nb_docs_total }}</div>
+          <div class="text-muted small mt-1">Documents actifs</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="display-6 fw-bold text-success">{{ nb_docs_courants }}</div>
+          <div class="text-muted small mt-1">Archives courantes</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="display-6 fw-bold text-danger">{{ nb_dua_echues }}</div>
+          <div class="text-muted small mt-1">DUA échues</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="display-6 fw-bold text-warning">{{ nb_dua_alerte }}</div>
+          <div class="text-muted small mt-1">DUA — alerte 30 j</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Documents confidentiels / secrets -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white fw-semibold">
+          <i class="bi bi-shield-lock me-2"></i>Documents confidentiels & secrets
+        </div>
+        <div class="card-body p-0">
+          {% if docs_confidentiels %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>Titre</th><th>Catégorie</th><th>Niveau</th></tr>
+              </thead>
+              <tbody>
+                {% for doc in docs_confidentiels %}
+                <tr>
+                  <td class="small">
+                    <a href="{% url 'archives:document_detail' doc.pk %}" class="text-decoration-none">
+                      {{ doc.titre|truncatechars:45 }}
+                    </a>
+                  </td>
+                  <td><span class="badge bg-secondary">{{ doc.categorie.code }}</span></td>
+                  <td>
+                    {% if doc.confidentialite == 'SECRET' %}
+                      <span class="badge bg-danger">Secret</span>
+                    {% else %}
+                      <span class="badge bg-warning text-dark">Confidentiel</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3 mb-0">Aucun document confidentiel.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- DUA échues -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white fw-semibold">
+          <i class="bi bi-clock-history me-2"></i>DUA échues — décision requise
+        </div>
+        <div class="card-body p-0">
+          {% if docs_dua_echues %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>Document</th><th>DUA échue le</th><th>Sort final</th></tr>
+              </thead>
+              <tbody>
+                {% for doc in docs_dua_echues %}
+                <tr>
+                  <td class="small">{{ doc.titre|truncatechars:40 }}</td>
+                  <td class="text-danger small fw-semibold">{{ doc.date_fin_dua|date:"d/m/Y" }}</td>
+                  <td><span class="badge bg-secondary">{{ doc.get_sort_final_display }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3 mb-0">Aucune DUA échue.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- DUA alerte 30 jours -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-warning text-dark fw-semibold">
+          <i class="bi bi-exclamation-triangle me-2"></i>DUA expirantes dans 30 jours
+        </div>
+        <div class="card-body p-0">
+          {% if docs_dua_alerte %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>Document</th><th>Expire le</th><th>Catégorie</th></tr>
+              </thead>
+              <tbody>
+                {% for doc in docs_dua_alerte %}
+                <tr>
+                  <td class="small">{{ doc.titre|truncatechars:40 }}</td>
+                  <td class="text-warning small fw-semibold">{{ doc.date_fin_dua|date:"d/m/Y" }}</td>
+                  <td><span class="badge bg-secondary">{{ doc.categorie.code }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3 mb-0">Aucune DUA expirante sous 30 jours.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Éliminations en cours -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white fw-semibold">
+          <i class="bi bi-trash me-2"></i>Éliminations en cours
+        </div>
+        <div class="card-body p-0">
+          {% if eliminations_en_cours %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>Numéro</th><th>Service</th><th>Statut</th><th>Docs</th></tr>
+              </thead>
+              <tbody>
+                {% for be in eliminations_en_cours %}
+                <tr>
+                  <td class="small fw-semibold">{{ be.numero }}</td>
+                  <td class="small">{{ be.service_producteur|truncatechars:30 }}</td>
+                  <td><span class="badge bg-warning text-dark">{{ be.get_statut_display }}</span></td>
+                  <td>{{ be.nb_documents }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3 mb-0">Aucune élimination en cours.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Versements en attente -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white fw-semibold">
+          <i class="bi bi-box-arrow-up me-2"></i>Versements en attente
+        </div>
+        <div class="card-body p-0">
+          {% if versements_en_attente %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>Numéro</th><th>Service</th><th>Exercice</th><th>Statut</th></tr>
+              </thead>
+              <tbody>
+                {% for bv in versements_en_attente %}
+                <tr>
+                  <td class="small fw-semibold">{{ bv.numero }}</td>
+                  <td class="small">{{ bv.service_versant|truncatechars:30 }}</td>
+                  <td class="small">{{ bv.exercice|default:"—" }}</td>
+                  <td><span class="badge bg-info text-dark">{{ bv.get_statut_display }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3 mb-0">Aucun versement en attente.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Prêts en retard -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white fw-semibold">
+          <i class="bi bi-hourglass-split me-2"></i>Prêts en retard
+        </div>
+        <div class="card-body p-0">
+          {% if prets_en_retard %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>Emprunteur</th><th>Document</th><th>Retour prévu</th></tr>
+              </thead>
+              <tbody>
+                {% for pret in prets_en_retard %}
+                <tr>
+                  <td class="small">{{ pret.emprunteur.get_full_name|default:pret.emprunteur.username }}</td>
+                  <td class="small">{{ pret.document.titre|truncatechars:35 }}</td>
+                  <td class="text-danger small fw-semibold">{{ pret.date_retour_prevue|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3 mb-0">Aucun prêt en retard.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+</div>
+{% endblock %}
