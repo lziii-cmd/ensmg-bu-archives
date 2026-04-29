@@ -3,6 +3,9 @@ Modèles du système de gestion des archives de l'ENSMG.
 Conformes à la norme ISO 15489 et à la loi sénégalaise n° 2006-19.
 """
 
+import hashlib
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
